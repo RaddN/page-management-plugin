@@ -67,7 +67,7 @@ function pmp_admin_page()
                     <table class="wp-list-table widefat fixed striped">
                         <thead>
                             <tr>
-                                <th><?php esc_html_e('Pages', 'page-management-plugin'); ?></th>
+                                <th><?php esc_html_e('Pages', 'page-management-plugin'); ?> <button class="button"><?php esc_html_e('Change Template', 'page-management-plugin'); ?></button></th>
                                 <th><?php esc_html_e('Actions', 'page-management-plugin'); ?></th>
                             </tr>
                         </thead>
@@ -93,7 +93,10 @@ function pmp_admin_page()
 
 
                                         </td>
-                                        <td><button class="button"><?php esc_html_e('Change Template', 'page-management-plugin'); ?></button></td>
+                                        <td>child will be here
+                    <button class="button button-primary choose_templates" data-child-page = "yes"><?php esc_html_e('Choose Template', 'page-management-plugin'); ?></button>
+
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                                 <tr>

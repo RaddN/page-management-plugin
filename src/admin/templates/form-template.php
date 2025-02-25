@@ -114,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (!isset($_POST['import_template'])): ?>
 <form method="post" action="" id="import_template_form" style="display: none;">
     <h2>Choose Template</h2>
+    <input type="hidden" name="child_of_rpages" value="" id="child_of_rpages_input">
     <label for="template_title">Template Title:</label>
     <input type="text" id="template_title" name="template_title" required>
 
@@ -138,6 +139,7 @@ if (!isset($_POST['import_template'])): ?>
     $template_id = intval($_POST['existing_page']);
     $template_post = get_post($template_id);
     $template_content = $template_post->post_content;
+    $child_of_page = $_POST['child_of_rpages'];
 
     // Match all dynamic content placeholders
     preg_match_all('/\{\{\{rdynamic_content type="([^"]+)" name="([^"]+)" title="([^"]+)"\}\}\}/', $template_content, $matches, PREG_SET_ORDER);
@@ -145,6 +147,7 @@ if (!isset($_POST['import_template'])): ?>
 
     <form method="post" action="">
         <h2><?php echo !isset($_POST['page_id']) ? 'Create Page' : 'Update Page'; ?></h2>
+        <input type="hidden" name="child_of_rpages" value="<?php echo esc_attr($child_of_page); ?>">
         <label for="parent_slug">Parent Page Slug:</label>
         <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : ''; ?>">
 

@@ -65,5 +65,8 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         $('#import_template_form').show();
         $('#page-management').hide();
+        if ($(this).data('child-page') === "yes") {
+            $('#child_of_rpages_input').val("yes");
+        }
     });
 });
