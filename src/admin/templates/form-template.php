@@ -220,8 +220,31 @@ if (!isset($_POST['import_template'])): ?>
                             <input type="<?php echo esc_attr($loop_match_item[1]); ?>" id="rdynamic_<?php echo $i; ?>_<?php echo esc_attr($loop_match_item[2]); ?>" name="rdynamic_<?php echo $i; ?>_<?php echo esc_attr($loop_match_item[2]); ?>" required value="<?php echo esc_attr($meta_data['rdynamic_' . $i . '_' . $loop_match_item[2]] ?? ''); ?>">
                         <?php endforeach; ?>
                     </div>
+                    <?php
+                // Check if there are already stored items in the database
+                if (isset($_POST['page_id'])) {
+                    for ($j = 2; $j <= 100; $j++) {?>
+                    <div class="loop_item item_<?php echo $j; ?>" style="display: none;">
+                    <h4>Item <?php echo $j; ?></h4>
+                    <?php                        
+                        foreach ($loop_matches as $loop_match_item) {
+                            $meta_key = 'rdynamic_' . $j . '_' . $loop_match_item[2];
+                            $meta_data = get_post_dynamic_meta($_POST['page_id']);
+                            $meta_value = $meta_data[$meta_key] ?? '';
+                            if ($meta_value) {
+                                echo '<style>.item_' . $j . ' {display: block !important;}</style>';
+                                echo '<label for="rdynamic_' . $j . '_' . esc_attr($loop_match_item[2]) . '">' . esc_html($loop_match_item[3]) . ':</label>';
+                                echo '<input type="' . esc_attr($loop_match_item[1]) . '" id="rdynamic_' . $j . '_' . esc_attr($loop_match_item[2]) . '" name="rdynamic_' . $j . '_' . esc_attr($loop_match_item[2]) . '" required value="' . esc_attr($meta_value) . '">';
+                            }
+                        }
+                        echo '</div>';
+                    }
+                }
+                ?>
                 <?php endfor; ?>
             </div>
+            <button type="button" id="add_loop_item">Add Item</button>
+            <button type="button" id="remove_loop_item">Remove Item</button>
         <?php endif; ?>
 
         <input type="hidden" name="template_title" value="<?php echo esc_attr($_POST['template_title']); ?>">
