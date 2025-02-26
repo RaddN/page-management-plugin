@@ -32,7 +32,7 @@ function pmp_admin_page()
 {
     // Get pages with 'rpage_category' in post meta
     $args = array(
-        'meta_key' => 'rpage_category',
+        'meta_key' => 'rdynamic_meta_data',
         'post_type' => 'page',
         'posts_per_page' => -1
     );
@@ -40,15 +40,28 @@ function pmp_admin_page()
     if (!isset($_POST['import_template'])):
         $pages = get_posts($args);
 ?>
+
+
         <div class="wrap" id="page-management">
             <h1><?php esc_html_e('Page Management System', 'page-management-plugin'); ?></h1>
             <h2 class="nav-tab-wrapper">
                 <?php
                 $categories = array();
                 foreach ($pages as $page) {
-                    $category = get_post_meta($page->ID, 'rpage_category', true);
-                    if (! in_array($category, $categories)) {
-                        $categories[] = $category;
+                    // Get the dynamic meta data for the page
+                    $meta_data = isset($page->ID) ? get_post_dynamic_meta($page->ID) : [];
+
+                    // Unserialize the meta data if it is not empty
+                    if (!empty($meta_data)) {
+                        $meta_data_array = maybe_unserialize($meta_data);
+
+                        // Check if 'rpage_category' exists in the unserialized array
+                        $category = isset($meta_data_array['rpage_category']) ? $meta_data_array['rpage_category'] : '';
+
+                        // Only add the category if it's not already in the array
+                        if (!in_array($category, $categories) && !empty($category)) {
+                            $categories[] = $category;
+                        }
                     }
                 }
                 foreach ($categories as $index => $category) {
@@ -73,10 +86,30 @@ function pmp_admin_page()
                         </thead>
                         <tbody>
                             <?php
-                            $filtered_pages = array_filter($pages, function ($page) use ($category) {
-                                return get_post_meta($page->ID, 'rpage_category', true) === $category;
-                            });
+                            // Store template IDs and filtered pages
+                            $filtered_pages = [];
+                            $template_ids = [];
+
+                            foreach ($pages as $page) {
+                                // Get the dynamic meta data for the page
+                                $meta_data = isset($page->ID) ? get_post_dynamic_meta($page->ID) : [];
+
+                                // Unserialize the meta data if it is not empty
+                                if (!empty($meta_data)) {
+                                    $meta_data_array = maybe_unserialize($meta_data);
+
+                                    // Check if 'rpage_category' exists and matches the provided category
+                                    if (isset($meta_data_array['rpage_category']) && $meta_data_array['rpage_category'] === $category) {
+                                        // Add to filtered pages
+                                        $filtered_pages[] = $page;
+
+                                        // Store the template ID
+                                        $template_ids[$page->ID] = isset($meta_data_array['rdynamic_template_id']) ? $meta_data_array['rdynamic_template_id'] : '';
+                                    }
+                                }
+                            }
                             ?>
+
                             <?php if ($filtered_pages) : ?>
                                 <?php foreach ($filtered_pages as $page) : ?>
                                     <tr>
@@ -84,18 +117,16 @@ function pmp_admin_page()
                                             <h3><?php echo esc_html(get_the_title($page->ID)); ?></h3>
                                             <form method="post" action="" style="display: inline;">
                                                 <input type="hidden" name="template_title" value="<?php echo esc_attr($category); ?>">
-                                                <input type="hidden" name="existing_page" value="<?php echo esc_attr(get_post_meta(reset($filtered_pages)->ID, 'rdynamic_template_id', true)); ?>">
+                                                <input type="hidden" name="existing_page" value="<?php echo esc_attr($template_ids[$page->ID]); ?>">
                                                 <input type="hidden" name="page_id" value="<?php echo esc_attr($page->ID); ?>">
                                                 <input type="submit" name="import_template" value="Edit" style="cursor:pointer; border: none; background: transparent; padding: 0; font-size: 12px; margin-right: 5px;">
                                                 <button type="submit" name="delete_page" style="cursor:pointer; border: none; background: transparent; padding: 0; font-size: 12px; margin-right: 5px;" onclick="return confirm('Are you sure you want to delete this page?');">Delete</button>
                                             </form>
                                             <a href="<?php echo get_permalink($page->ID); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
-
-
                                         </td>
-                                        <td>child will be here
-                    <button class="button button-primary choose_templates" data-child-page = "yes"><?php esc_html_e('Choose Template', 'page-management-plugin'); ?></button>
-
+                                        <td>
+                                            child will be here
+                                            <button class="button button-primary choose_templates" data-child-page="yes"><?php esc_html_e('Choose Template', 'page-management-plugin'); ?></button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -103,7 +134,7 @@ function pmp_admin_page()
                                     <td colspan="2">
                                         <form method="post" action="">
                                             <input type="hidden" name="template_title" value="<?php echo esc_attr($category); ?>">
-                                            <input type="hidden" name="existing_page" value="<?php echo esc_attr(get_post_meta(reset($filtered_pages)->ID, 'rdynamic_template_id', true)); ?>">
+                                            <input type="hidden" name="existing_page" value="<?php echo esc_attr($template_ids[reset($filtered_pages)->ID] ?? ''); ?>">
                                             <button type="submit" name="import_template" class="button button-primary"><?php esc_html_e('Create New Page', 'page-management-plugin'); ?></button>
                                         </form>
                                     </td>
