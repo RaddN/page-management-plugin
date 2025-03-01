@@ -80,7 +80,7 @@ function pmp_admin_page()
                     <table class="wp-list-table widefat fixed striped">
                         <thead>
                             <tr>
-                                <th><?php esc_html_e('Pages', 'page-management-plugin'); ?> <button class="button"><?php esc_html_e('Change Template', 'page-management-plugin'); ?></button></th>
+                                <th><?php esc_html_e('Pages', 'page-management-plugin'); ?> </th>
                                 <th><?php esc_html_e('Actions', 'page-management-plugin'); ?></th>
                             </tr>
                         </thead>
@@ -121,12 +121,13 @@ function pmp_admin_page()
                                                 <input type="hidden" name="page_id" value="<?php echo esc_attr($page->ID); ?>">
                                                 <input type="submit" name="import_template" value="Edit" style="cursor:pointer; border: none; background: transparent; padding: 0; font-size: 12px; margin-right: 5px;">
                                                 <button type="submit" name="delete_page" style="cursor:pointer; border: none; background: transparent; padding: 0; font-size: 12px; margin-right: 5px;" onclick="return confirm('Are you sure you want to delete this page?');">Delete</button>
+                                                <a href="<?php echo get_permalink($template_ids[$page->ID]); ?>" target="_blank">template</a>
                                             </form>
                                             <a href="<?php echo get_permalink($page->ID); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
                                         </td>
                                         <td>
                                             child will be here
-                                            <button class="button button-primary choose_templates" data-child-page="yes"><?php esc_html_e('Choose Template', 'page-management-plugin'); ?></button>
+                                            <button class="button button-primary choose_templates" data-child-page="yes" data-parent-id="<?php echo esc_attr($page->ID); ?>"><?php esc_html_e('Choose Template', 'page-management-plugin'); ?></button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

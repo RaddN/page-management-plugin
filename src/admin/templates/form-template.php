@@ -235,15 +235,18 @@ if (!isset($_POST['import_template'])): ?>
 
     $meta_data = isset($_POST['page_id']) ? get_post_dynamic_meta($_POST['page_id']) : [];
     ?>
-<style>
+    <style>
     /* Base styles for the form */
-#rcreate_page {
-    max-width: 800px;
+    #rcreate_page {
     margin: 0 auto;
     padding: 20px;
     background-color: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr) !important;
+    justify-content: space-between;
+    column-gap: 100px;
 }
 
 /* Form headings */
@@ -251,6 +254,7 @@ if (!isset($_POST['import_template'])): ?>
     font-size: 24px;
     margin-bottom: 20px;
     color: #333;
+    grid-column: span 2;
 }
 
 #rcreate_page h3 {
@@ -291,10 +295,19 @@ if (!isset($_POST['import_template'])): ?>
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s;
+    margin-right: 20px ;
 }
 
 #rcreate_page button:hover {
     background-color: #005a8c;
+}
+#rcreate_page textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    box-sizing: border-box; /* Ensures padding is included in width */
 }
 
 /* Responsive design */
@@ -325,13 +338,15 @@ if (!isset($_POST['import_template'])): ?>
     <form method="post" action="" id="rcreate_page">
         <h2><?php echo !isset($_POST['page_id']) ? 'Create Page' : 'Update Page'; ?></h2>
         <input type="hidden" name="child_of_rpages" value="<?php echo esc_attr($child_of_page); ?>">
-
+        <div class="basic_fields" style="display: flex; gap: 20px;flex-wrap: wrap;">
+        <div style="width: 48%;">
         <label for="parent_slug">Parent Page Slug:</label>
         <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : ''; ?>">
-
+        </div>
+        <div style="width: 48%;">
         <label for="page_name">Page Name:</label>
         <input type="text" id="page_name" name="page_name" required value="<?php echo isset($_POST['page_id']) ? esc_attr(get_the_title($_POST['page_id'])) : ''; ?>">
-
+        </div>
         <label for="page_slug">Page Slug:</label>
         <input type="text" id="page_slug" name="page_slug" required value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', $_POST['page_id'])) : ''; ?>">
 
@@ -343,12 +358,14 @@ if (!isset($_POST['import_template'])): ?>
                 <input type="<?php echo esc_attr($match[1]); ?>" id="<?php echo esc_attr($match[2]); ?>" name="rdynamic_<?php echo esc_attr($match[2]); ?>" required value="<?php echo esc_attr($meta_data['rdynamic_' . $match[2]] ?? ''); ?>">
             <?php endif; ?>
         <?php endforeach;
+        echo "</div>";
 
+        echo '<div class="all_loops">';
         foreach ($loop_rmatches[0] as $loop_match) {
 
             // Extract loop name and template
             preg_match('/{{{rdynamic_content_loop_start name=[\'"]?(.*?)?[\'"]?}}}(.*?){{{rdynamic_content_loop_ends name=\1}}}/s', $loop_match, $matches);
-
+            echo '<div class="loop_container">';
             if (isset($matches[1]) && isset($matches[2])) {
                 $loop_name = trim($matches[1], "'\"");
                 $loop_template = $matches[2];
@@ -357,7 +374,7 @@ if (!isset($_POST['import_template'])): ?>
                 $unique_steps = [];
                 // Loop through the keys and collect unique step titles
                 foreach ($data as $key => $value) {
-                    if (preg_match('/^rdynamic_steps_(\d+)_steps_title$/', $key, $matches)) {
+                    if (preg_match('/^rdynamic_'.$loop_name.'_(\d+)/', $key, $matches)) {
                         $unique_steps[$matches[1]] = $value; // Store unique titles indexed by step number
                     }
                 }
@@ -365,7 +382,6 @@ if (!isset($_POST['import_template'])): ?>
                 $loop_count = isset($_POST['loop_count_' . $loop_name])
                     ? intval($_POST['loop_count_' . $loop_name])
                     : ($stored_loop_count !== 0 ? $stored_loop_count : 1);
-
 
                 // Display loop heading
                 echo '<h3>' . ucfirst(str_replace('_', ' ', $loop_name)) . ' Loop</h3>';
@@ -378,6 +394,16 @@ if (!isset($_POST['import_template'])): ?>
 
                     // Match loop content within the loop template
                     preg_match_all('/\{\{\{loop_content type=[\'"]([^\'"]+)[\'"] name=[\'"]([^\'"]+)[\'"] title=[\'"]([^\'"]+)[\'"]\}\}\}/', $loop_template, $loop_content_matches, PREG_SET_ORDER);
+                    // Serialize the matches
+                    $loop_content_matches = array_map('serialize', $loop_content_matches);
+                    // Reverse the array to keep the last unique match
+                    $loop_content_matches = array_reverse($loop_content_matches);
+                    // Get unique matches
+                    $unique_matches = array_unique($loop_content_matches);
+                    // Reverse again to maintain original order (with the last unique matches first)
+                    $unique_matches = array_reverse($unique_matches);
+                    // Unserialize the unique matches
+                    $loop_content_matches = array_map('unserialize', $unique_matches);
 
                     foreach ($loop_content_matches as $match) {
                         echo '<label for="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '">' . esc_html($match[3]) . ':</label>';
@@ -385,11 +411,52 @@ if (!isset($_POST['import_template'])): ?>
                         $value = isset($data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])])
                             ? $data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])]
                             : ''; // Default to an empty string if neither exists
-
-                        // Echo the input element with the determined value
+                        if (preg_match('/text_area|textarea|textArea|TextArea|text-area/i', $match[1])):
+                            echo '<textarea id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" required>' . esc_attr($value) . '</textarea>';
+                        else:
                         echo '<input type="' . esc_attr($match[1]) . '" id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" value="' . esc_attr($value) . '" required>';
+                        endif;
                     }
                     echo '</div>'; // Close loop_item
+                    ?>
+                    <script>
+                        document.querySelectorAll('.add_loop_item').forEach(button => {
+                            button.addEventListener('click', function() {
+                                let loopName = this.getAttribute('data-loop-name');
+                                let loopCountField = document.getElementById('loop_count_' + loopName);
+                                let loopCount = parseInt(loopCountField.value);
+                                loopCount++;
+                                loopCountField.value = loopCount;
+
+                                let loopItems = document.getElementById('loop_items_' + loopName);
+                                let newItem = document.createElement('div');
+                                newItem.classList.add('loop_item');
+                                newItem.innerHTML = `<h4>Item ${loopCount}</h4>
+                            <?php foreach ($loop_content_matches as $loop_match): ?>
+                                <label for="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>"><?php echo esc_html($loop_match[3]); ?>:</label>
+                                <input type="<?php echo esc_attr($loop_match[1]); ?>" id="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" name="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" required>
+                            <?php endforeach; ?>`;
+
+                                loopItems.appendChild(newItem);
+                            });
+                        });
+
+                        document.querySelectorAll('.remove_loop_item').forEach(button => {
+                            button.addEventListener('click', function() {
+                                let loopName = this.getAttribute('data-loop-name');
+                                let loopCountField = document.getElementById('loop_count_' + loopName);
+                                let loopCount = parseInt(loopCountField.value);
+
+                                if (loopCount > 1) {
+                                    loopCount--;
+                                    loopCountField.value = loopCount;
+                                    let loopItems = document.getElementById('loop_items_' + loopName);
+                                    loopItems.removeChild(loopItems.lastElementChild);
+                                }
+                            });
+                        });
+                    </script>
+                    <?php
                 }
 
                 echo '</div>'; // Close loop_items
@@ -397,7 +464,9 @@ if (!isset($_POST['import_template'])): ?>
                 echo '<button type="button" class="add_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Add Item</button>';
                 echo '<button type="button" class="remove_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Remove Item</button>';
             }
+            echo "</div>";
         }
+        echo "</div>";
         ?>
 
 
@@ -411,41 +480,5 @@ if (!isset($_POST['import_template'])): ?>
             <button type="submit" name="create_page">Create Page</button>
         <?php endif; ?>
     </form>
-    <script>
-        document.querySelectorAll('.add_loop_item').forEach(button => {
-            button.addEventListener('click', function() {
-                let loopName = this.getAttribute('data-loop-name');
-                let loopCountField = document.getElementById('loop_count_' + loopName);
-                let loopCount = parseInt(loopCountField.value);
-                loopCount++;
-                loopCountField.value = loopCount;
-
-                let loopItems = document.getElementById('loop_items_' + loopName);
-                let newItem = document.createElement('div');
-                newItem.classList.add('loop_item');
-                newItem.innerHTML = `<h4>Item ${loopCount}</h4>
-            <?php foreach ($loop_content_matches as $loop_match): ?>
-                <label for="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>"><?php echo esc_html($loop_match[3]); ?>:</label>
-                <input type="<?php echo esc_attr($loop_match[1]); ?>" id="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" name="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" required>
-            <?php endforeach; ?>`;
-
-                loopItems.appendChild(newItem);
-            });
-        });
-
-        document.querySelectorAll('.remove_loop_item').forEach(button => {
-            button.addEventListener('click', function() {
-                let loopName = this.getAttribute('data-loop-name');
-                let loopCountField = document.getElementById('loop_count_' + loopName);
-                let loopCount = parseInt(loopCountField.value);
-
-                if (loopCount > 1) {
-                    loopCount--;
-                    loopCountField.value = loopCount;
-                    let loopItems = document.getElementById('loop_items_' + loopName);
-                    loopItems.removeChild(loopItems.lastElementChild);
-                }
-            });
-        });
-    </script>
+    
 <?php endif; ?>
