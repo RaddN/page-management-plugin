@@ -67,6 +67,8 @@ jQuery(document).ready(function($) {
         $('#page-management').hide();
         if ($(this).data('child-page') === "yes") {
             $('#child_of_rpages_input').val("yes");
+            $('#parent_id_template_input').val($(this).data('parent-id'));
+            $('#parent_slug_template_input').val($(this).data('parent-slug'));
         }
     });
 });

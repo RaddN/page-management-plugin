@@ -1,0 +1,43 @@
+/**
+ * Editor styles for custom blocks
+ */
+
+ .pmp-dynamic-content-block,
+ .pmp-dynamic-loop-block,
+ .pmp-loop-content-block {
+     border: 1px solid #ccc;
+     border-radius: 4px;
+     padding: 0;
+     margin-bottom: 12px;
+     background-color: #fff;
+ }
+ 
+ .pmp-block-header {
+     background-color: #f1f1f1;
+     padding: 10px 15px;
+     font-weight: bold;
+     border-bottom: 1px solid #ccc;
+     border-top-left-radius: 3px;
+     border-top-right-radius: 3px;
+ }
+ 
+ .pmp-block-content {
+     padding: 15px;
+     font-family: monospace;
+     word-break: break-all;
+ }
+ 
+ .pmp-dynamic-content-block .pmp-block-header {
+     background-color: #e8f6fd;
+     color: #0073aa;
+ }
+ 
+ .pmp-dynamic-loop-block .pmp-block-header {
+     background-color: #f9f1e8;
+     color: #aa7700;
+ }
+ 
+ .pmp-loop-content-block .pmp-block-header {
+     background-color: #e8fde8;
+     color: #00aa30;
+ }

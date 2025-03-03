@@ -164,35 +164,29 @@ function store_post_meta($post_id)
             $meta_data[$key] = wp_kses_post($value);
         }
     }
+
+    $child_page = sanitize_text_field($_POST['child_of_rpages']);
+
+    if($child_page!=="yes"){
     // Store additional meta
     $meta_data['rpage_category'] = sanitize_text_field($_POST['template_title']);
     $meta_data['rdynamic_template_id'] = intval($_POST['existing_page']);
+    }else{
+        update_post_meta($post_id, 'child_page_of', sanitize_text_field($_POST['parent_slug']));
+    }
 
     // Store all meta data in a single meta field
     update_post_meta($post_id, 'rdynamic_meta_data', $meta_data);
 }
 
-function get_post_dynamic_meta($post_id)
-{
-    // Retrieve the stored meta data
-    $meta_data = get_post_meta($post_id, 'rdynamic_meta_data', true);
-
-    // Unserialize the data
-    $meta_data = maybe_unserialize($meta_data);
-
-    // If no meta data found, return an empty array
-    if (empty($meta_data)) {
-        return array();
-    }
-
-    // Return the meta data as an associative array
-    return $meta_data;
-}
 
 // Render form for importing templates
 if (!isset($_POST['import_template'])): ?>
     <form method="post" action="" id="import_template_form" style="display: none;">
         <h2>Choose Template</h2>
+        <input type="hidden" name="child_page" value="" id="child_of_rpages_input">
+        <input type="hidden" name="parent_id" value="" id="parent_id_template_input">
+        <input type="hidden" name="parent_slug" value="" id="parent_slug_template_input">
         <label for="template_title">Template Title:</label>
         <input type="text" id="template_title" name="template_title" required>
 
@@ -217,7 +211,8 @@ if (!isset($_POST['import_template'])): ?>
     $template_id = intval($_POST['existing_page']);
     $template_post = get_post($template_id);
     $template_content = $template_post->post_content;
-    $child_of_page = $_POST['child_of_rpages'] ?? '';
+    $child_of_page = $_POST['child_page'] ?? '';
+    $parent_page_slug = $_POST['parent_slug'] ?? '';
 
     preg_match_all('/\{\{\{rdynamic_content type=[\'\"]([^\'\"]+)[\'\"] name=[\'\"]([^\'\"]+)[\'\"] title=[\'\"]([^\'\"]+)[\'\"]\}\}\}/', $template_content, $matches, PREG_SET_ORDER);
 
@@ -341,7 +336,7 @@ if (!isset($_POST['import_template'])): ?>
         <div class="basic_fields" style="display: flex; gap: 20px;flex-wrap: wrap;">
         <div style="width: 48%;">
         <label for="parent_slug">Parent Page Slug:</label>
-        <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : ''; ?>">
+        <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : $parent_page_slug ?? ''; ?>">
         </div>
         <div style="width: 48%;">
         <label for="page_name">Page Name:</label>
