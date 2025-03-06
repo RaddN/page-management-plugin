@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * templates/form-template.php
+ *
+ * 
+ */
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
@@ -39,6 +45,15 @@ function create_page()
     // Replace dynamic content placeholders
     $template_content = replace_dynamic_content($template_content);
 
+    // Get parent page ID if parent slug exists
+    $parent_id = 0;
+    if (!empty($parent_slug)) {
+        $parent_page = get_page_by_path($parent_slug);
+        if ($parent_page) {
+            $parent_id = $parent_page->ID;
+        }
+    }
+
     // Create the new page
     $new_page_id = wp_insert_post(array(
         'post_title' => $page_name,
@@ -46,7 +61,7 @@ function create_page()
         'post_content' => $template_content,
         'post_status' => 'publish',
         'post_type' => 'page',
-        'post_parent' => !empty($parent_slug) ? get_page_by_path($parent_slug)->ID : 0,
+        'post_parent' => $parent_id,
     ));
 
     // Store form data in post meta
@@ -67,12 +82,22 @@ function update_page()
     // Replace dynamic content placeholders
     $template_content = replace_dynamic_content($template_content);
 
+    // Get parent page ID if parent slug exists
+    $parent_id = 0;
+    if (!empty($parent_slug)) {
+        $parent_page = get_page_by_path($parent_slug);
+        if ($parent_page) {
+            $parent_id = $parent_page->ID;
+        }
+    }
+
     // Update the existing page
     wp_update_post(array(
         'ID' => $page_id,
         'post_title' => $page_name,
         'post_name' => $page_slug,
         'post_content' => $template_content,
+        'post_parent' => $parent_id,
     ));
 
     // Update form data in post meta
@@ -86,8 +111,18 @@ function update_page()
 function delete_page()
 {
     $page_id = intval($_POST['page_id']);
+
+    // Get all child pages recursively
+    $child_pages = get_pages([
+        'child_of' => $page_id,
+    ]);
+    // First delete all child pages to avoid orphaned pages
+    foreach ($child_pages as $child) {
+        wp_delete_post($child->ID, true);
+    }
+
     wp_delete_post($page_id, true);
-    wp_redirect(admin_url('edit.php?post_type=page'));
+    wp_redirect(admin_url('admin.php?page=page-management'));
     exit;
 }
 
@@ -164,21 +199,37 @@ function store_post_meta($post_id)
             $meta_data[$key] = wp_kses_post($value);
         }
     }
+    
 
-    $child_page = sanitize_text_field($_POST['child_of_rpages']);
-
+    $child_page = isset($_POST['child_of_rpages']) ? sanitize_text_field($_POST['child_of_rpages']) : '';
+    $meta_data['rdynamic_template_id'] = intval($_POST['existing_page']);
     if($child_page!=="yes"){
     // Store additional meta
     $meta_data['rpage_category'] = sanitize_text_field($_POST['template_title']);
-    $meta_data['rdynamic_template_id'] = intval($_POST['existing_page']);
     }else{
-        update_post_meta($post_id, 'child_page_of', sanitize_text_field($_POST['parent_slug']));
+        // Store child page category
+        $meta_data['rpage_child_category'] = sanitize_text_field($_POST['template_title']);
+        
+        // Store parent slug to establish relationship for nested children
+        $parent_slug = sanitize_text_field($_POST['parent_slug']);
+        if (!empty($parent_slug)) {
+            update_post_meta($post_id, 'child_page_of', $parent_slug);
+        }
     }
 
     // Store all meta data in a single meta field
     update_post_meta($post_id, 'rdynamic_meta_data', $meta_data);
 }
 
+/**
+ * Recursively get all parent slugs for a page
+ * 
+ * @param int $page_id The page ID
+ * @return array Array of parent slugs
+ */
+function get_post_dynamic_meta($post_id) {
+    return pmp_get_dynamic_meta($post_id);
+}
 
 // Render form for importing templates
 if (!isset($_POST['import_template'])): ?>

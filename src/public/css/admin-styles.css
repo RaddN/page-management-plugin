@@ -1,0 +1,151 @@
+/**
+ * Admin Styles for Page Management Plugin
+ * Styles for both table and tree layouts
+ */
+
+/* Layout Switcher */
+.pmp-header-actions {
+    margin: 10px 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pmp-layout-switcher {
+    margin-bottom: 15px;
+}
+
+.pmp-layout-switcher label {
+    margin-right: 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.pmp-layout-switcher input[type="radio"] {
+    margin-right: 5px;
+}
+
+/* Tree Layout Styles */
+.pmp-tree-layout {
+    margin-top: 20px;
+}
+
+.pmp-tree-container {
+    padding: 10px;
+}
+
+.pmp-tree-item {
+    margin-bottom: 10px;
+}
+
+.pmp-tree-node {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.pmp-tree-node.has-children {
+    background-color: #f0f7fd;
+}
+
+.pmp-node-toggle {
+    display: inline-flex;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.pmp-node-title {
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.pmp-node-actions {
+    margin-left: auto;
+}
+
+.pmp-tree-children {
+    margin-left: 20px;
+    padding-top: 10px;
+}
+
+.pmp-tree-category {
+    margin-bottom: 15px;
+    padding-left: 10px;
+    border-left: 1px solid #ddd;
+}
+
+.pmp-tree-category h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.pmp-tree-actions {
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.pmp-no-pages {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Collapsed state */
+.pmp-tree-node.collapsed + .pmp-tree-children {
+    display: none;
+}
+
+/**
+ * Styles for the table layout view
+ */
+
+
+
+
+/* Indentation for nested levels */
+.pmp-table-layout [style*="margin-left"] {
+    position: relative;
+}
+
+.pmp-table-layout [style*="margin-left"]::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    height: 100%;
+    border-left: 1px dashed #dcdcde;
+}
+.pmp-table-layout [style*="margin-left"]>:nth-child(2){
+    margin-left: 25px;
+}
+.pmp-table-layout [style*="margin-left"]>h3::before{
+    content: ".....";
+    color: #dcdcde;
+    margin-right: 5px;
+    font-size: 0.9rem;
+    margin-top: -10px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media screen and (max-width: 782px) {
+    .pmp-table-layout th, 
+    .pmp-table-layout td {
+        padding: 8px 10px;
+    }
+    
+    .pmp-table-layout h3 {
+        display: block;
+        margin-bottom: 12px;
+    }
+    
+    .nav-tab {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
