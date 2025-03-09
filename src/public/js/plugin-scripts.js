@@ -7,10 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const templateTitleInput = document.getElementById('template-title');
     const existingPageSelect = document.getElementById('existing-page-select');
 
+    if(chooseTemplateButton)
     chooseTemplateButton.addEventListener('click', function() {
         templateForm.style.display = 'block';
     });
-
+    if(importButton)
     importButton.addEventListener('click', function() {
         const templateTitle = templateTitleInput.value;
         const existingPage = existingPageSelect.value;
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please fill in all fields.');
         }
     });
-
+    if(createPageButton)
     createPageButton.addEventListener('click', function() {
         const parentSlug = document.getElementById('parent-page-slug').value;
         const pageName = document.getElementById('page-name').value;

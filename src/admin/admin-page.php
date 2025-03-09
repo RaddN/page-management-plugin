@@ -36,27 +36,30 @@ function pmp_add_admin_menu()
 /**
  * Enqueue necessary scripts and styles
  */
-function pmp_enqueue_scripts($hook)
-{
+function pmp_enqueue_scripts($hook) {
     if ('toplevel_page_page-management' !== $hook) {
         return;
     }
-
+    
     wp_enqueue_script('pmp-plugin-scripts', plugin_dir_url(__FILE__) . '../public/js/plugin-scripts.js', array('jquery'), null, true);
-
-    // Add custom styles for layout options
+    
+    // Add custom styles for layout options and modal
     wp_enqueue_style('pmp-admin-styles', plugin_dir_url(__FILE__) . '../public/css/admin-styles.css', array(), null);
-
-    // Add custom JS for layout switching
+    
+    // Add custom JS for layout switching and import functionality
     wp_register_script('pmp-layout-switcher', plugin_dir_url(__FILE__) . '../public/js/layout-switcher.js', array('jquery'), null, true);
-
+    
+    // Add new script for import functionality
+    wp_register_script('pmp-import-page', plugin_dir_url(__FILE__) . '../public/js/import-page.js', array('jquery'), null, true);
+    
     // Pass data to JS
     wp_localize_script('pmp-layout-switcher', 'pmpData', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('pmp_layout_nonce')
     ));
-
+    
     wp_enqueue_script('pmp-layout-switcher');
+    wp_enqueue_script('pmp-import-page');
 }
 
 /**
@@ -272,12 +275,13 @@ function pmp_render_nested_child_pages_table($parent_page, $direct_child_pages, 
         pmp_render_page_row_table($child_page, $meta_data, $all_child_pages, $nesting_level);
         if ($child_page->ID === $last_child_page->ID) { ?>
             <tr>
-                <td>
+                <td style="display: flex ; gap: 10px;">
                     <?php
                     pmp_render_form_button(
                         ['template_title' => $category, 'child_page' => 'yes', 'parent_slug' => $parent_page_slug, 'existing_page' => $template_id],
                         'Create New Child Page'
                     );
+                    pmp_render_import_button(['template_title' => $category, 'child_page' => 'yes', 'parent_slug' => $parent_page_slug, 'existing_page' => $template_id], 'Import Existing Page', 'button-secondary');
                     ?>
                 </td>
             </tr>
@@ -361,6 +365,8 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                                 ['template_title' => $child_category, 'child_page' => 'yes', 'parent_slug' => $page_slug, 'existing_page' => $template_id],
                                 'Create New Child Page'
                             );
+                            pmp_render_import_button(['template_title' => $category, 'child_page' => 'yes', 'parent_slug' => $page_slug, 'existing_page' => $template_id], 'Import Existing Page', 'button-secondary');
+
                             ?>
                         </div>
                     </div>
@@ -419,6 +425,8 @@ function pmp_render_filtered_pages_table($pages, $all_child_pages, $category)
             ['template_title' => $category, 'existing_page' => $template_id],
             'Create New Page'
         );
+        pmp_render_import_button(['template_title' => $category, 'child_page' => 'No', 'parent_slug' => '', 'existing_page' => $template_id], 'Import Existing Page', 'button-secondary');
+
         echo '</td></tr>';
     } else {
         echo '<tr><td colspan="2">' . esc_html__('No pages found.', 'page-management-plugin') . '</td></tr>';
@@ -456,6 +464,7 @@ function pmp_render_filtered_pages_tree($pages, $all_child_pages, $category)
             ['template_title' => $category, 'existing_page' => $template_id],
             'Create New Page'
         );
+        pmp_render_import_button(['template_title' => $category, 'child_page' => 'no', 'parent_slug' => '', 'existing_page' => $template_id], 'Import Existing Page', 'button-secondary');
         echo '</div></div>';
     } else {
         echo '<div class="pmp-no-pages">' . esc_html__('No pages found.', 'page-management-plugin') . '</div>';
@@ -523,7 +532,7 @@ function pmp_admin_page()
     $all_child_pages = get_posts($args2);
     $categories = pmp_get_categories($pages);
 
-    include_once plugin_dir_path(__FILE__) . 'templates/form-template.php';
+    require_once plugin_dir_path(__FILE__) . 'templates/form-template.php';
 
     if (!isset($_POST['import_template'])):
     ?>
@@ -564,5 +573,101 @@ function pmp_admin_page()
         </div>
     <?php endif; ?>
     <p><?php esc_html_e('Instead of content, use {{{rdynamic_content type="text" name="first_title" title="first Title"}}} in your template page', 'page-management-plugin'); ?></p>
+
+    <!-- Import Existing Page Modal -->
+    <div id="import_existing_page_modal" class="pmp-modal" style="display: none;">
+        <div class="pmp-modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Import Existing Page</h2>
+            
+            <p>Select an existing page to import:</p>
+            <form method="post" action="">
+            <select id="select_page_to_import" name="page_id">
+                <option value="">Select a page</option>
+                <?php
+                // Fetch existing pages and populate the dropdown
+                $pages = get_posts(array(
+                    'post_type' => 'page',
+                    'numberposts' => -1,
+                    'post_status' => array('publish', 'draft')
+                ));
+                
+                foreach ($pages as $page) {
+                    echo '<option value="' . esc_attr($page->ID) . '">' . esc_html($page->post_title) . ' (' . esc_html($page->post_status) . ')</option>';
+                }
+                ?>
+            </select>
+            
+            <div id="import_loading" style="display: none;">
+                <p>Loading page data...</p>
+            </div>
+            
+            <input type="hidden" name="template_title" id="template_title_hidden" value="">
+            <input type="hidden" id="child_page_hidden" value="">
+            <input type="hidden" id="parent_slug_hidden" value="">
+            <input type="hidden" name="existing_page" id="existing_page_hidden" value="">
+            <input type="hidden" name="action" value="import_template">
+            <button type="submit" id="import_selected_page_btn" class="button button-primary" disabled>Import Selected Page</button>
+            </form>
+        </div>
+    </div>
 <?php
+}
+
+
+/**
+ * Render import button
+ * 
+ * @param array $data Form data
+ * @param string $button_text Text for the button
+ * @param string $class Additional CSS class
+ */
+function pmp_render_import_button($data, $button_text, $class = 'button-primary') {
+    ?>
+    <button type="button" class="button <?php echo esc_attr($class); ?> import_existing_page" 
+            data-template-title="<?php echo esc_attr($data['template_title']); ?>"
+            data-child-page="<?php echo esc_attr($data['child_page']); ?>"
+            data-parent-slug="<?php echo esc_attr($data['parent_slug'] ?? ''); ?>"
+            data-existing-page="<?php echo esc_attr($data['existing_page']); ?>">
+        <?php echo esc_html($button_text); ?>
+    </button>
+    <?php
+}
+
+
+/**
+ * Register AJAX handler for importing existing pages
+ */
+add_action('wp_ajax_pmp_import_existing_page', 'pmp_handle_import_existing_page');
+
+/**
+ * AJAX handler for importing existing page data
+ */
+function pmp_handle_import_existing_page() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'pmp_layout_nonce')) {
+        wp_send_json_error('Security check failed');
+    }
+    
+    // Check for page ID
+    if (!isset($_POST['page_id']) || empty($_POST['page_id'])) {
+        wp_send_json_error('No page ID provided');
+    }
+    
+    $page_id = intval($_POST['page_id']);
+    $page = get_post($page_id);
+    
+    if (!$page) {
+        wp_send_json_error('Page not found');
+    }
+    
+    // Get page data
+    $page_data = array(
+        'title' => $page->post_title,
+        'slug' => $page->post_name,
+        'content' => $page->post_content,
+        'meta' => get_post_meta($page_id)
+    );
+    
+    wp_send_json_success($page_data);
 }

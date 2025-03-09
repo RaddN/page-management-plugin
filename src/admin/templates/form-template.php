@@ -75,6 +75,7 @@ function create_page()
 function update_page()
 {
     $page_id = intval($_POST['page_id']);
+    $parent_slug = sanitize_text_field($_POST['parent_slug']);
     $page_name = sanitize_text_field($_POST['page_name']);
     $page_slug = sanitize_text_field($_POST['page_slug']);
     $template_content = fetch_template_content();
@@ -280,6 +281,7 @@ if (!isset($_POST['import_template'])): ?>
     $loop_count = isset($_POST['loop_count']) ? intval($_POST['loop_count']) : 1;
 
     $meta_data = isset($_POST['page_id']) ? get_post_dynamic_meta($_POST['page_id']) : [];
+
     ?>
     <style>
     /* Base styles for the form */
@@ -387,7 +389,7 @@ if (!isset($_POST['import_template'])): ?>
         <div class="basic_fields" style="display: flex; gap: 20px;flex-wrap: wrap;">
         <div style="width: 48%;">
         <label for="parent_slug">Parent Page Slug:</label>
-        <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : $parent_page_slug ?? ''; ?>">
+        <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['parent_slug'])? $_POST['parent_slug'] : (isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : $parent_page_slug ?? ''); ?>">
         </div>
         <div style="width: 48%;">
         <label for="page_name">Page Name:</label>
