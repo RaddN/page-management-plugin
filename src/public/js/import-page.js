@@ -59,7 +59,6 @@ jQuery(document).ready(function($) {
                 formHtml += '<input type="hidden" name="page_id" value="' + pageId + '">';
                 formHtml += '<input type="hidden" name="imported_page_title" value="' + response.data.title + '">';
                 formHtml += '<input type="hidden" name="imported_page_slug" value="' + response.data.slug + '">';
-                formHtml += '<input type="hidden" name="imported_page_content" value="' + encodeURIComponent(response.data.content) + '">';
                 formHtml += '</form>';
                 
                 $('body').append(formHtml);

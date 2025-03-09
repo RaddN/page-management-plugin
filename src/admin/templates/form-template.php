@@ -200,17 +200,17 @@ function store_post_meta($post_id)
             $meta_data[$key] = wp_kses_post($value);
         }
     }
-    
+
 
     $child_page = isset($_POST['child_of_rpages']) ? sanitize_text_field($_POST['child_of_rpages']) : '';
     $meta_data['rdynamic_template_id'] = intval($_POST['existing_page']);
-    if($child_page!=="yes"){
-    // Store additional meta
-    $meta_data['rpage_category'] = sanitize_text_field($_POST['template_title']);
-    }else{
+    if ($child_page !== "yes") {
+        // Store additional meta
+        $meta_data['rpage_category'] = sanitize_text_field($_POST['template_title']);
+    } else {
         // Store child page category
         $meta_data['rpage_child_category'] = sanitize_text_field($_POST['template_title']);
-        
+
         // Store parent slug to establish relationship for nested children
         $parent_slug = sanitize_text_field($_POST['parent_slug']);
         if (!empty($parent_slug)) {
@@ -228,7 +228,8 @@ function store_post_meta($post_id)
  * @param int $page_id The page ID
  * @return array Array of parent slugs
  */
-function get_post_dynamic_meta($post_id) {
+function get_post_dynamic_meta($post_id)
+{
     return pmp_get_dynamic_meta($post_id);
 }
 
@@ -281,252 +282,308 @@ if (!isset($_POST['import_template'])): ?>
     $loop_count = isset($_POST['loop_count']) ? intval($_POST['loop_count']) : 1;
 
     $meta_data = isset($_POST['page_id']) ? get_post_dynamic_meta($_POST['page_id']) : [];
-
+    $htmlOnly = '';
+    if (empty($meta_data)) {
+        $imported_page_id = isset($_POST['page_id']) ? $_POST['page_id'] : 0;
+        $imported_page = get_post($imported_page_id) ?? "";
+        $imported_page_content = $imported_page->post_content ?? "";
+        $htmlOnly = '<div class="old_content"><code style="white-space: pre-wrap;">' . extractOnlyHtmlTags($imported_page_content) . '</code></div>';
+    }
     ?>
+
     <style>
-    /* Base styles for the form */
-    #rcreate_page {
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    display: grid;
-    grid-template-columns: repeat(2, 1fr) !important;
-    justify-content: space-between;
-    column-gap: 100px;
-}
+        /* Base styles for the form */
+        .old_content {
+            height: 500px;
+            margin: 20px;
+            overflow: scroll;
+        }
 
-/* Form headings */
-#rcreate_page h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #333;
-    grid-column: span 2;
-}
+        #rcreate_page {
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr) !important;
+            justify-content: space-between;
+            column-gap: 100px;
+        }
 
-#rcreate_page h3 {
-    font-size: 20px;
-    margin-top: 30px;
-    margin-bottom: 10px;
-    color: #555;
-}
+        /* Form headings */
+        #rcreate_page h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            grid-column: span 2;
+        }
 
-/* Input fields */
-#rcreate_page input[type="text"],
-#rcreate_page input[type="url"],
-#rcreate_page input[type="hidden"],
-#rcreate_page input[type="number"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-}
+        #rcreate_page h3 {
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            color: #555;
+        }
 
-/* Labels */
-#rcreate_page label {
-    font-size: 14px;
-    margin-bottom: 5px;
-    display: block;
-    color: #666;
-}
+        /* Input fields */
+        #rcreate_page input[type="text"],
+        #rcreate_page input[type="url"],
+        #rcreate_page input[type="hidden"],
+        #rcreate_page input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
 
-/* Buttons */
-#rcreate_page button {
-    background-color: #007cba;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-    margin-right: 20px ;
-}
+        /* Labels */
+        #rcreate_page label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            color: #666;
+        }
 
-#rcreate_page button:hover {
-    background-color: #005a8c;
-}
-#rcreate_page textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    box-sizing: border-box; /* Ensures padding is included in width */
-}
+        /* Buttons */
+        #rcreate_page button {
+            background-color: #007cba;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-right: 20px;
+        }
 
-/* Responsive design */
-@media (max-width: 600px) {
-    #rcreate_page {
-        padding: 15px;
-    }
+        #rcreate_page button:hover {
+            background-color: #005a8c;
+        }
 
-    #rcreate_page h2 {
-        font-size: 22px;
-    }
+        #rcreate_page textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            /* Ensures padding is included in width */
+        }
 
-    #rcreate_page h3 {
-        font-size: 18px;
-    }
+        /* Responsive design */
+        @media (max-width: 600px) {
+            #rcreate_page {
+                padding: 15px;
+            }
 
-    #rcreate_page input[type="text"],
-    #rcreate_page input[type="url"] {
-        font-size: 14px;
-    }
+            #rcreate_page h2 {
+                font-size: 22px;
+            }
 
-    #rcreate_page button {
-        width: 100%;
-        padding: 12px;
-    }
-}
-</style>
+            #rcreate_page h3 {
+                font-size: 18px;
+            }
+
+            #rcreate_page input[type="text"],
+            #rcreate_page input[type="url"] {
+                font-size: 14px;
+            }
+
+            #rcreate_page button {
+                width: 100%;
+                padding: 12px;
+            }
+        }
+    </style>
     <form method="post" action="" id="rcreate_page">
         <h2><?php echo !isset($_POST['page_id']) ? 'Create Page' : 'Update Page'; ?></h2>
         <input type="hidden" name="child_of_rpages" value="<?php echo esc_attr($child_of_page); ?>">
         <div class="basic_fields" style="display: flex; gap: 20px;flex-wrap: wrap;">
-        <div style="width: 48%;">
-        <label for="parent_slug">Parent Page Slug:</label>
-        <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['parent_slug'])? $_POST['parent_slug'] : (isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : $parent_page_slug ?? ''); ?>">
-        </div>
-        <div style="width: 48%;">
-        <label for="page_name">Page Name:</label>
-        <input type="text" id="page_name" name="page_name" required value="<?php echo isset($_POST['page_id']) ? esc_attr(get_the_title($_POST['page_id'])) : ''; ?>">
-        </div>
-        <label for="page_slug">Page Slug:</label>
-        <input type="text" id="page_slug" name="page_slug" required value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', $_POST['page_id'])) : ''; ?>">
+            <div style="width: 48%;">
+                <label for="parent_slug">Parent Page Slug:</label>
+                <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['parent_slug']) ? $_POST['parent_slug'] : (isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : $parent_page_slug ?? ''); ?>">
+            </div>
+            <div style="width: 48%;">
+                <label for="page_name">Page Name:</label>
+                <input type="text" id="page_name" name="page_name" required value="<?php echo isset($_POST['page_id']) ? esc_attr(get_the_title($_POST['page_id'])) : ''; ?>">
+            </div>
+            <label for="page_slug">Page Slug:</label>
+            <input type="text" id="page_slug" name="page_slug" required value="<?php echo isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', $_POST['page_id'])) : ''; ?>">
 
-        <?php foreach ($matches as $match): ?>
-            <label for="<?php echo esc_attr($match[2]); ?>"><?php echo esc_html($match[3]); ?>:</label>
-            <?php if (stripos($match[1], 'text_area') !== false): ?>
-                <textarea id="<?php echo esc_attr($match[2]); ?>" name="rdynamic_<?php echo esc_attr($match[2]); ?>" required><?php echo esc_attr($meta_data['rdynamic_' . $match[2]] ?? ''); ?></textarea>
-            <?php else: ?>
-                <input type="<?php echo esc_attr($match[1]); ?>" id="<?php echo esc_attr($match[2]); ?>" name="rdynamic_<?php echo esc_attr($match[2]); ?>" required value="<?php echo esc_attr($meta_data['rdynamic_' . $match[2]] ?? ''); ?>">
-            <?php endif; ?>
-        <?php endforeach;
-        echo "</div>";
+            <?php foreach ($matches as $match): ?>
+                <label for="<?php echo esc_attr($match[2]); ?>"><?php echo esc_html($match[3]); ?>:</label>
+                <?php if (stripos($match[1], 'text_area') !== false): ?>
+                    <textarea id="<?php echo esc_attr($match[2]); ?>" name="rdynamic_<?php echo esc_attr($match[2]); ?>" required><?php echo esc_attr($meta_data['rdynamic_' . $match[2]] ?? ''); ?></textarea>
+                <?php else: ?>
+                    <input type="<?php echo esc_attr($match[1]); ?>" id="<?php echo esc_attr($match[2]); ?>" name="rdynamic_<?php echo esc_attr($match[2]); ?>" required value="<?php echo esc_attr($meta_data['rdynamic_' . $match[2]] ?? ''); ?>">
+                <?php endif; ?>
+                <?php endforeach;
+            echo "</div>";
 
-        echo '<div class="all_loops">';
-        foreach ($loop_rmatches[0] as $loop_match) {
+            echo '<div class="all_loops">';
+            foreach ($loop_rmatches[0] as $loop_match) {
 
-            // Extract loop name and template
-            preg_match('/{{{rdynamic_content_loop_start name=[\'"]?(.*?)?[\'"]?}}}(.*?){{{rdynamic_content_loop_ends name=\1}}}/s', $loop_match, $matches);
-            echo '<div class="loop_container">';
-            if (isset($matches[1]) && isset($matches[2])) {
-                $loop_name = trim($matches[1], "'\"");
-                $loop_template = $matches[2];
-                $data = $meta_data;
-                // determine how many stored items exist
-                $unique_steps = [];
-                // Loop through the keys and collect unique step titles
-                foreach ($data as $key => $value) {
-                    if (preg_match('/^rdynamic_'.$loop_name.'_(\d+)/', $key, $matches)) {
-                        $unique_steps[$matches[1]] = $value; // Store unique titles indexed by step number
+                // Extract loop name and template
+                preg_match('/{{{rdynamic_content_loop_start name=[\'"]?(.*?)?[\'"]?}}}(.*?){{{rdynamic_content_loop_ends name=\1}}}/s', $loop_match, $matches);
+                echo '<div class="loop_container">';
+                if (isset($matches[1]) && isset($matches[2])) {
+                    $loop_name = trim($matches[1], "'\"");
+                    $loop_template = $matches[2];
+                    $data = $meta_data;
+                    // determine how many stored items exist
+                    $unique_steps = [];
+                    // Loop through the keys and collect unique step titles
+                    foreach ($data as $key => $value) {
+                        if (preg_match('/^rdynamic_' . $loop_name . '_(\d+)/', $key, $matches)) {
+                            $unique_steps[$matches[1]] = $value; // Store unique titles indexed by step number
+                        }
                     }
-                }
-                $stored_loop_count = count($unique_steps);
-                $loop_count = isset($_POST['loop_count_' . $loop_name])
-                    ? intval($_POST['loop_count_' . $loop_name])
-                    : ($stored_loop_count !== 0 ? $stored_loop_count : 1);
+                    $stored_loop_count = count($unique_steps);
+                    $loop_count = isset($_POST['loop_count_' . $loop_name])
+                        ? intval($_POST['loop_count_' . $loop_name])
+                        : ($stored_loop_count !== 0 ? $stored_loop_count : 1);
 
-                // Display loop heading
-                echo '<h3>' . ucfirst(str_replace('_', ' ', $loop_name)) . ' Loop</h3>';
-                echo '<div id="loop_items_' . esc_attr($loop_name) . '">';
+                    // Display loop heading
+                    echo '<h3>' . ucfirst(str_replace('_', ' ', $loop_name)) . ' Loop</h3>';
+                    echo '<div id="loop_items_' . esc_attr($loop_name) . '">';
 
-                // Generate loop items based on count
-                for ($i = 1; $i <= $loop_count; $i++) {
-                    echo '<div class="loop_item">';
-                    echo '<h4>Item ' . $i . '</h4>';
+                    // Generate loop items based on count
+                    for ($i = 1; $i <= $loop_count; $i++) {
+                        echo '<div class="loop_item">';
+                        echo '<h4>Item ' . $i . '</h4>';
 
-                    // Match loop content within the loop template
-                    preg_match_all('/\{\{\{loop_content type=[\'"]([^\'"]+)[\'"] name=[\'"]([^\'"]+)[\'"] title=[\'"]([^\'"]+)[\'"]\}\}\}/', $loop_template, $loop_content_matches, PREG_SET_ORDER);
-                    // Serialize the matches
-                    $loop_content_matches = array_map('serialize', $loop_content_matches);
-                    // Reverse the array to keep the last unique match
-                    $loop_content_matches = array_reverse($loop_content_matches);
-                    // Get unique matches
-                    $unique_matches = array_unique($loop_content_matches);
-                    // Reverse again to maintain original order (with the last unique matches first)
-                    $unique_matches = array_reverse($unique_matches);
-                    // Unserialize the unique matches
-                    $loop_content_matches = array_map('unserialize', $unique_matches);
+                        // Match loop content within the loop template
+                        preg_match_all('/\{\{\{loop_content type=[\'"]([^\'"]+)[\'"] name=[\'"]([^\'"]+)[\'"] title=[\'"]([^\'"]+)[\'"]\}\}\}/', $loop_template, $loop_content_matches, PREG_SET_ORDER);
+                        // Serialize the matches
+                        $loop_content_matches = array_map('serialize', $loop_content_matches);
+                        // Reverse the array to keep the last unique match
+                        $loop_content_matches = array_reverse($loop_content_matches);
+                        // Get unique matches
+                        $unique_matches = array_unique($loop_content_matches);
+                        // Reverse again to maintain original order (with the last unique matches first)
+                        $unique_matches = array_reverse($unique_matches);
+                        // Unserialize the unique matches
+                        $loop_content_matches = array_map('unserialize', $unique_matches);
 
-                    foreach ($loop_content_matches as $match) {
-                        echo '<label for="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '">' . esc_html($match[3]) . ':</label>';
-                        // Determine the value based on the conditions
-                        $value = isset($data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])])
-                            ? $data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])]
-                            : ''; // Default to an empty string if neither exists
-                        if (preg_match('/text_area|textarea|textArea|TextArea|text-area/i', $match[1])):
-                            echo '<textarea id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" required>' . esc_attr($value) . '</textarea>';
-                        else:
-                        echo '<input type="' . esc_attr($match[1]) . '" id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" value="' . esc_attr($value) . '" required>';
-                        endif;
-                    }
-                    echo '</div>'; // Close loop_item
-                    ?>
-                    <script>
-                        document.querySelectorAll('.add_loop_item').forEach(button => {
-                            button.addEventListener('click', function() {
-                                let loopName = this.getAttribute('data-loop-name');
-                                let loopCountField = document.getElementById('loop_count_' + loopName);
-                                let loopCount = parseInt(loopCountField.value);
-                                loopCount++;
-                                loopCountField.value = loopCount;
+                        foreach ($loop_content_matches as $match) {
+                            echo '<label for="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '">' . esc_html($match[3]) . ':</label>';
+                            // Determine the value based on the conditions
+                            $value = isset($data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])])
+                                ? $data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])]
+                                : ''; // Default to an empty string if neither exists
+                            if (preg_match('/text_area|textarea|textArea|TextArea|text-area/i', $match[1])):
+                                echo '<textarea id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" required>' . esc_attr($value) . '</textarea>';
+                            else:
+                                echo '<input type="' . esc_attr($match[1]) . '" id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" value="' . esc_attr($value) . '" required>';
+                            endif;
+                        }
+                        echo '</div>'; // Close loop_item
+                ?>
+                        <script>
+                            document.querySelectorAll('.add_loop_item').forEach(button => {
+                                button.addEventListener('click', function() {
+                                    let loopName = this.getAttribute('data-loop-name');
+                                    let loopCountField = document.getElementById('loop_count_' + loopName);
+                                    let loopCount = parseInt(loopCountField.value);
+                                    loopCount++;
+                                    loopCountField.value = loopCount;
 
-                                let loopItems = document.getElementById('loop_items_' + loopName);
-                                let newItem = document.createElement('div');
-                                newItem.classList.add('loop_item');
-                                newItem.innerHTML = `<h4>Item ${loopCount}</h4>
+                                    let loopItems = document.getElementById('loop_items_' + loopName);
+                                    let newItem = document.createElement('div');
+                                    newItem.classList.add('loop_item');
+                                    newItem.innerHTML = `<h4>Item ${loopCount}</h4>
                             <?php foreach ($loop_content_matches as $loop_match): ?>
                                 <label for="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>"><?php echo esc_html($loop_match[3]); ?>:</label>
                                 <input type="<?php echo esc_attr($loop_match[1]); ?>" id="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" name="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" required>
                             <?php endforeach; ?>`;
 
-                                loopItems.appendChild(newItem);
+                                    loopItems.appendChild(newItem);
+                                });
                             });
-                        });
 
-                        document.querySelectorAll('.remove_loop_item').forEach(button => {
-                            button.addEventListener('click', function() {
-                                let loopName = this.getAttribute('data-loop-name');
-                                let loopCountField = document.getElementById('loop_count_' + loopName);
-                                let loopCount = parseInt(loopCountField.value);
+                            document.querySelectorAll('.remove_loop_item').forEach(button => {
+                                button.addEventListener('click', function() {
+                                    let loopName = this.getAttribute('data-loop-name');
+                                    let loopCountField = document.getElementById('loop_count_' + loopName);
+                                    let loopCount = parseInt(loopCountField.value);
 
-                                if (loopCount > 1) {
-                                    loopCount--;
-                                    loopCountField.value = loopCount;
-                                    let loopItems = document.getElementById('loop_items_' + loopName);
-                                    loopItems.removeChild(loopItems.lastElementChild);
-                                }
+                                    if (loopCount > 1) {
+                                        loopCount--;
+                                        loopCountField.value = loopCount;
+                                        let loopItems = document.getElementById('loop_items_' + loopName);
+                                        loopItems.removeChild(loopItems.lastElementChild);
+                                    }
+                                });
                             });
-                        });
-                    </script>
-                    <?php
+                        </script>
+            <?php
+                    }
+
+                    echo '</div>'; // Close loop_items
+                    echo '<input type="hidden" name="loop_count_' . esc_attr($loop_name) . '" id="loop_count_' . esc_attr($loop_name) . '" value="' . esc_attr($loop_count) . '">';
+                    echo '<button type="button" class="add_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Add Item</button>';
+                    echo '<button type="button" class="remove_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Remove Item</button>';
                 }
-
-                echo '</div>'; // Close loop_items
-                echo '<input type="hidden" name="loop_count_' . esc_attr($loop_name) . '" id="loop_count_' . esc_attr($loop_name) . '" value="' . esc_attr($loop_count) . '">';
-                echo '<button type="button" class="add_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Add Item</button>';
-                echo '<button type="button" class="remove_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Remove Item</button>';
+                echo "</div>";
             }
+            echo $htmlOnly;
             echo "</div>";
-        }
-        echo "</div>";
-        ?>
+
+            ?>
 
 
-        <input type="hidden" name="template_title" value="<?php echo esc_attr($_POST['template_title']); ?>">
-        <input type="hidden" name="existing_page" value="<?php echo esc_attr($_POST['existing_page']); ?>">
+            <input type="hidden" name="template_title" value="<?php echo esc_attr($_POST['template_title']); ?>">
+            <input type="hidden" name="existing_page" value="<?php echo esc_attr($_POST['existing_page']); ?>">
 
-        <?php if (isset($_POST['page_id'])): ?>
-            <input type="hidden" name="page_id" value="<?php echo esc_attr($_POST['page_id']); ?>">
-            <button type="submit" name="update_page">Update Page</button>
-        <?php else: ?>
-            <button type="submit" name="create_page">Create Page</button>
-        <?php endif; ?>
+            <?php if (isset($_POST['page_id'])): ?>
+                <input type="hidden" name="page_id" value="<?php echo esc_attr($_POST['page_id']); ?>">
+                <button type="submit" name="update_page">Update Page</button>
+            <?php else: ?>
+                <button type="submit" name="create_page">Create Page</button>
+            <?php endif; ?>
     </form>
+
+<?php endif;
+
+
+function extractOnlyHtmlTags($content)
+{
+    // Remove WordPress comments/block markers
+    $content = preg_replace('/<!--\s*wp:.*?-->/', '', $content);
+    $content = preg_replace('/<!--\s*\/wp:.*?-->/', '', $content);
+
+    // Remove any other HTML comments
+    $content = preg_replace('/<!--.*?-->/s', '', $content);
+
+    // Remove div, style, script, class, svg, img, and id tags
+    $content = preg_replace('/<div[^>]*>|<\/div>/', '', $content);
+    $content = preg_replace('/<style[^>]*>.*?<\/style>/s', '', $content);
+    $content = preg_replace('/<script[^>]*>.*?<\/script>/s', '', $content);
+    $content = preg_replace('/<svg[^>]*>.*?<\/svg>/s', '', $content);
+    $content = preg_replace('/<img[^>]*>/', '', $content);
+
+    // Remove all attributes from remaining HTML tags
+    $content = preg_replace('/<([a-z][a-z0-9]*)[^>]*?(\/?)>/i', '<$1$2>', $content);
+
+    // Remove empty HTML tags
+    $content = preg_replace('/<([a-z][a-z0-9]*)\s*><\/\1>/i', '', $content);
+
+    // Remove empty HTML tags with spaces
+    $content = preg_replace('/<([a-z][a-z0-9]*)\s*>\s*<\/\1>/i', '', $content);
     
-<?php endif; ?>
+    // Remove extra whitespace and newlines
+    $content = preg_replace('/\s+/', ' ', $content); // Replace multiple spaces with a single space
+    $content = preg_replace('/^\s+|\s+$/', '', $content); // Trim leading and trailing whitespace
+    $content = preg_replace('/\n\s*\n/', "\n", $content); // Remove empty lines
+
+    // Add new line before all heading tags (h1-h6) and paragraph tags
+    $content = preg_replace('/(<h[1-6]>|<p>)/', "\n\n$1", $content);
+    $content = preg_replace('/(<span>)/', "\n$1", $content);
+
+    // Wrap the cleaned content in <pre> and <code> tags
+    return htmlspecialchars(trim($content));
+}

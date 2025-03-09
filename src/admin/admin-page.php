@@ -665,7 +665,6 @@ function pmp_handle_import_existing_page() {
     $page_data = array(
         'title' => $page->post_title,
         'slug' => $page->post_name,
-        'content' => $page->post_content,
         'meta' => get_post_meta($page_id)
     );
     
