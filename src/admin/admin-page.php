@@ -189,7 +189,7 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
             <h3><?php echo esc_html(get_the_title($page->ID)); ?></h3>
             <?php
             pmp_render_form_button(
-                ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template'],
+                ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category'])?'no':'yes'],
                 'Edit',
                 'inline'
             );
@@ -317,7 +317,7 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
             <span class="pmp-node-actions">
                 <?php
                 pmp_render_form_button(
-                    ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template'],
+                    ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category'])?'no':'yes'],
                     'Edit',
                     'inline'
                 );

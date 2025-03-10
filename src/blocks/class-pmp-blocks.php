@@ -59,7 +59,7 @@ add_action('init', 'dapfforwc_register_dynamic_ajax_filter_block');
 
 function dynamic_content_management_func($attributes)
 {
-    return $attributes["output"];
+    return $attributes["output"]??'';
 }
 
 function dynamic__loop_content_management_func($attributes)

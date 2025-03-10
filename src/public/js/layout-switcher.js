@@ -38,6 +38,9 @@ jQuery(document).ready(function($) {
                 }
             }
         });
-        location.reload();
+        setTimeout(() => {
+            location.reload();
+        }, 500);
+        
     });
 });

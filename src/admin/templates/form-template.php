@@ -136,6 +136,7 @@ function fetch_template_content()
 
 function replace_dynamic_content($template_content)
 {
+    // Replace single dynamic content placeholders
     foreach ($_POST as $key => $value) {
         if (strpos($key, 'rdynamic_') === 0) {
             $dynamic_name = substr($key, 9); // Remove 'rdynamic_' prefix
@@ -220,6 +221,7 @@ function store_post_meta($post_id)
 
     // Store all meta data in a single meta field
     update_post_meta($post_id, 'rdynamic_meta_data', $meta_data);
+    update_post_meta($post_id, 'rdynamic_template_id', intval($_POST['existing_page']));
 }
 
 /**
@@ -483,7 +485,37 @@ if (!isset($_POST['import_template'])): ?>
                         }
                         echo '</div>'; // Close loop_item
                 ?>
-                        <script>
+            <?php
+                    }
+
+                    echo '</div>'; // Close loop_items
+                    echo '<input type="hidden" name="loop_count_' . esc_attr($loop_name) . '" id="loop_count_' . esc_attr($loop_name) . '" value="' . esc_attr($loop_count) . '">';
+                    echo '<button type="button" class="add_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Add Item</button>';
+                    echo '<button type="button" class="remove_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Remove Item</button>';
+                    ?>
+                    
+                    <?php
+                }
+                echo "</div>";
+            }
+            echo $htmlOnly;
+            echo "</div>";
+
+            ?>
+
+
+            <input type="hidden" name="template_title" value="<?php echo esc_attr($_POST['template_title']); ?>">
+            <input type="hidden" name="existing_page" value="<?php echo esc_attr($_POST['existing_page']); ?>">
+
+            <?php if (isset($_POST['page_id'])): ?>
+                <input type="hidden" name="page_id" value="<?php echo esc_attr($_POST['page_id']); ?>">
+                <button type="submit" name="update_page">Update Page</button>
+            <?php else: ?>
+                <button type="submit" name="create_page">Create Page</button>
+                
+            <?php endif; ?>
+    </form>
+    <script>
                             document.querySelectorAll('.add_loop_item').forEach(button => {
                                 button.addEventListener('click', function() {
                                     let loopName = this.getAttribute('data-loop-name');
@@ -520,32 +552,6 @@ if (!isset($_POST['import_template'])): ?>
                                 });
                             });
                         </script>
-            <?php
-                    }
-
-                    echo '</div>'; // Close loop_items
-                    echo '<input type="hidden" name="loop_count_' . esc_attr($loop_name) . '" id="loop_count_' . esc_attr($loop_name) . '" value="' . esc_attr($loop_count) . '">';
-                    echo '<button type="button" class="add_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Add Item</button>';
-                    echo '<button type="button" class="remove_loop_item" data-loop-name="' . esc_attr($loop_name) . '">Remove Item</button>';
-                }
-                echo "</div>";
-            }
-            echo $htmlOnly;
-            echo "</div>";
-
-            ?>
-
-
-            <input type="hidden" name="template_title" value="<?php echo esc_attr($_POST['template_title']); ?>">
-            <input type="hidden" name="existing_page" value="<?php echo esc_attr($_POST['existing_page']); ?>">
-
-            <?php if (isset($_POST['page_id'])): ?>
-                <input type="hidden" name="page_id" value="<?php echo esc_attr($_POST['page_id']); ?>">
-                <button type="submit" name="update_page">Update Page</button>
-            <?php else: ?>
-                <button type="submit" name="create_page">Create Page</button>
-            <?php endif; ?>
-    </form>
 
 <?php endif;
 
@@ -587,3 +593,4 @@ function extractOnlyHtmlTags($content)
     // Wrap the cleaned content in <pre> and <code> tags
     return htmlspecialchars(trim($content));
 }
+
