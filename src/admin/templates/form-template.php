@@ -407,7 +407,7 @@ if (!isset($_POST['import_template'])): ?>
         <div class="basic_fields" style="display: flex; gap: 20px;flex-wrap: wrap;">
             <div style="width: 48%;">
                 <label for="parent_slug">Parent Page Slug:</label>
-                <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['parent_slug']) ? $_POST['parent_slug'] : (isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : $parent_page_slug ?? ''); ?>">
+                <input type="text" id="parent_slug" name="parent_slug" value="<?php echo isset($_POST['parent_slug']) ? esc_attr($_POST['parent_slug']) : (isset($_POST['page_id']) ? esc_attr(get_post_field('post_name', wp_get_post_parent_id($_POST['page_id']))) : esc_attr($parent_page_slug) ?? ''); ?>">
             </div>
             <div style="width: 48%;">
                 <label for="page_name">Page Name:</label>
@@ -450,13 +450,13 @@ if (!isset($_POST['import_template'])): ?>
                         : ($stored_loop_count !== 0 ? $stored_loop_count : 1);
 
                     // Display loop heading
-                    echo '<h3>' . ucfirst(str_replace('_', ' ', $loop_name)) . ' Loop</h3>';
+                    echo '<h3>' . esc_attr(ucfirst(str_replace('_', ' ', $loop_name))) . ' Loop</h3>';
                     echo '<div id="loop_items_' . esc_attr($loop_name) . '">';
 
                     // Generate loop items based on count
                     for ($i = 1; $i <= $loop_count; $i++) {
                         echo '<div class="loop_item">';
-                        echo '<h4>Item ' . $i . '</h4>';
+                        echo '<h4>Item ' . esc_attr($i) . '</h4>';
 
                         // Match loop content within the loop template
                         preg_match_all('/\{\{\{loop_content type=[\'"]([^\'"]+)[\'"] name=[\'"]([^\'"]+)[\'"] title=[\'"]([^\'"]+)[\'"]\}\}\}/', $loop_template, $loop_content_matches, PREG_SET_ORDER);
@@ -472,15 +472,15 @@ if (!isset($_POST['import_template'])): ?>
                         $loop_content_matches = array_map('unserialize', $unique_matches);
 
                         foreach ($loop_content_matches as $match) {
-                            echo '<label for="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '">' . esc_html($match[3]) . ':</label>';
+                            echo '<label for="rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2]) . '">' . esc_html($match[3]) . ':</label>';
                             // Determine the value based on the conditions
-                            $value = isset($data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])])
-                                ? $data['rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2])]
+                            $value = isset($data['rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2])])
+                                ? $data['rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2])]
                                 : ''; // Default to an empty string if neither exists
                             if (preg_match('/text_area|textarea|textArea|TextArea|text-area/i', $match[1])):
-                                echo '<textarea id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" required>' . esc_attr($value) . '</textarea>';
+                                echo '<textarea id="rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2]) . '" required>' . esc_attr($value) . '</textarea>';
                             else:
-                                echo '<input type="' . esc_attr($match[1]) . '" id="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . $i . '_' . esc_attr($match[2]) . '" value="' . esc_attr($value) . '" required>';
+                                echo '<input type="' . esc_attr($match[1]) . '" id="rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2]) . '" name="rdynamic_' . esc_attr($loop_name) . '_' . esc_attr($i) . '_' . esc_attr($match[2]) . '" value="' . esc_attr($value) . '" required>';
                             endif;
                         }
                         echo '</div>'; // Close loop_item
@@ -498,7 +498,7 @@ if (!isset($_POST['import_template'])): ?>
                 }
                 echo "</div>";
             }
-            echo $htmlOnly;
+            echo wp_kses_post($htmlOnly);
             echo "</div>";
 
             ?>

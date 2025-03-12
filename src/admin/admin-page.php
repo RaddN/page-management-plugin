@@ -69,7 +69,7 @@ function pmp_save_layout_preference()
 {
     if (isset($_POST['pmp_layout']) && current_user_can('manage_options')) {
         check_admin_referer('pmp_layout_change', 'pmp_layout_nonce');
-        $layout = sanitize_text_field($_POST['pmp_layout']);
+        $layout = sanitize_text_field(wp_unslash($_POST['pmp_layout']));
 
         if (in_array($layout, array('table', 'tree'))) {
             update_user_meta(get_current_user_id(), 'pmp_layout_preference', $layout);
@@ -201,8 +201,8 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                 true
             );
             ?>
-            <a href="<?php echo get_permalink($template_id); ?>" target="_blank">template</a>
-            <a href="<?php echo get_permalink($page->ID); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
+            <a href="<?php echo esc_url(get_permalink($template_id)); ?>" target="_blank">template</a>
+            <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
         </td>
         <td colspan="2">
             <?php
@@ -329,8 +329,8 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                     true
                 );
                 ?>
-                <a href="<?php echo get_permalink($template_id); ?>" target="_blank">template</a>
-                <a href="<?php echo get_permalink($page->ID); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
+                <a href="<?php echo esc_url(get_permalink($template_id)); ?>" target="_blank">template</a>
+                <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
             </span>
         </div>
 
@@ -645,7 +645,14 @@ add_action('wp_ajax_pmp_import_existing_page', 'pmp_handle_import_existing_page'
  */
 function pmp_handle_import_existing_page() {
     // Verify nonce
-    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'pmp_layout_nonce')) {
+    if (!isset($_POST['nonce'])) {
+        wp_send_json_error('Security check failed');
+    }
+    
+    // Unsplash the nonce for safe verification
+    $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
+    
+    if (!wp_verify_nonce($nonce, 'pmp_layout_nonce')) {
         wp_send_json_error('Security check failed');
     }
     

@@ -4,6 +4,7 @@
  * Description: A plugin to manage and create multiple pages based on templates with dynamic content.
  * Version: 1.0
  * Author: Your Name
+ * License: GPLv2 or later
  */
 
 // Exit if accessed directly
@@ -260,14 +261,14 @@ function render_template_info_meta_box($post) {
         echo '<p><strong>This is a template page used by:</strong></p>';
         echo '<ul>';
         foreach ($dependent_pages as $page) {
-            echo '<li><a href="' . get_edit_post_link($page->ID) . '">' . esc_html($page->post_title) . '</a></li>';
+            echo '<li><a href="' . esc_url(get_edit_post_link($page->ID)) . '">' . esc_html($page->post_title) . '</a></li>';
         }
         echo '</ul>';
         echo '<p><em>Content and style changes made to this page will update all dependent pages.</em></p>';
         
         // Add info about title visibility
         $title_visibility = get_post_meta($post->ID, 'ast-title-bar-display', true) === 'disabled' ? 'Hidden' : 'Visible';
-        echo '<p><strong>Title visibility:</strong> ' . $title_visibility . '</p>';
+        echo '<p><strong>Title visibility:</strong> ' . esc_attr($title_visibility) . '</p>';
         echo '<p><em>All meta data changes will affect all dependent pages.</em></p>';
     } else {
         // Check if this page uses a template
@@ -275,11 +276,11 @@ function render_template_info_meta_box($post) {
         if (!empty($template_id)) {
             $template = get_post($template_id);
             if ($template) {
-                echo '<p><strong>This page uses template:</strong> <a href="' . get_edit_post_link($template_id) . '">' . esc_html($template->post_title) . '</a></p>';
+                echo '<p><strong>This page uses template:</strong> <a href="' . esc_url(get_edit_post_link($template_id)) . '">' . esc_html($template->post_title) . '</a></p>';
                 
                 // Show if title is visible or hidden based on template settings
                 $title_visibility = get_post_meta($post->ID, 'ast-title-bar-display', true) === 'disabled' ? 'Hidden' : 'Visible';
-                echo '<p><strong>Title visibility:</strong> ' . $title_visibility . ' (inherited from template)</p>';
+                echo '<p><strong>Title visibility:</strong> ' . esc_attr($title_visibility) . ' (inherited from template)</p>';
             }
         }
     }
