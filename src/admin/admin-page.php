@@ -36,28 +36,29 @@ function pmp_add_admin_menu()
 /**
  * Enqueue necessary scripts and styles
  */
-function pmp_enqueue_scripts($hook) {
+function pmp_enqueue_scripts($hook)
+{
     if ('toplevel_page_page-management' !== $hook) {
         return;
     }
-    
-    wp_enqueue_script('pmp-plugin-scripts', plugin_dir_url(__FILE__) . '../public/js/plugin-scripts.js', array('jquery'), null, true);
-    
+
+    wp_enqueue_script('pmp-plugin-scripts', plugin_dir_url(__FILE__) . '../public/js/plugin-scripts.js', array('jquery'), "1.0.0", true);
+
     // Add custom styles for layout options and modal
-    wp_enqueue_style('pmp-admin-styles', plugin_dir_url(__FILE__) . '../public/css/admin-styles.css', array(), null);
-    
+    wp_enqueue_style('pmp-admin-styles', plugin_dir_url(__FILE__) . '../public/css/admin-styles.css', array(), "1.0.0");
+
     // Add custom JS for layout switching and import functionality
-    wp_register_script('pmp-layout-switcher', plugin_dir_url(__FILE__) . '../public/js/layout-switcher.js', array('jquery'), null, true);
-    
+    wp_register_script('pmp-layout-switcher', plugin_dir_url(__FILE__) . '../public/js/layout-switcher.js', array('jquery'), "1.0.0", true);
+
     // Add new script for import functionality
-    wp_register_script('pmp-import-page', plugin_dir_url(__FILE__) . '../public/js/import-page.js', array('jquery'), null, true);
-    
+    wp_register_script('pmp-import-page', plugin_dir_url(__FILE__) . '../public/js/import-page.js', array('jquery'), "1.0.0", true);
+
     // Pass data to JS
     wp_localize_script('pmp-layout-switcher', 'pmpData', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('pmp_layout_nonce')
     ));
-    
+
     wp_enqueue_script('pmp-layout-switcher');
     wp_enqueue_script('pmp-import-page');
 }
@@ -134,10 +135,11 @@ function pmp_render_category_tabs($categories)
  * @param string $class Additional CSS class
  * @param bool $confirm Whether to ask for confirmation
  */
-function pmp_render_form_button($data, $button_text, $class = 'button-primary', $confirm = false)
+function pmp_render_form_button($data, $button_text, $class = 'button-primary', $confirm = false, $none_action = 'pmp_import_action', $none_txt = 'pmp_nonce')
 {
 ?>
     <form method="post" action="" style="display: inline;">
+        <?php wp_nonce_field($none_action, $none_txt); ?>
         <?php foreach ($data as $key => $value): ?>
             <input type="hidden" name="<?php echo esc_attr($key); ?>" value="<?php echo esc_attr($value); ?>">
         <?php endforeach; ?>
@@ -189,7 +191,7 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
             <h3><?php echo esc_html(get_the_title($page->ID)); ?></h3>
             <?php
             pmp_render_form_button(
-                ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category'])?'no':'yes'],
+                ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category']) ? 'no' : 'yes'],
                 'Edit',
                 'inline'
             );
@@ -198,11 +200,13 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                 ['page_id' => $page->ID, 'action' => 'delete_page'],
                 'Delete',
                 'inline',
-                true
+                true,
+                'pmp_delete_action',
+                'pmp_delete_nonce'
             );
             ?>
             <a href="<?php echo esc_url(get_permalink($template_id)); ?>" target="_blank">template</a>
-            <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
+            <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'dynamic-page-manager'); ?></a>
         </td>
         <td colspan="2">
             <?php
@@ -229,7 +233,7 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                     data-child-page="yes"
                     data-parent-id="<?php echo esc_attr($page->ID); ?>"
                     data-parent-slug="<?php echo esc_attr($page_slug); ?>" style="margin-top: 50px;">
-                    <?php esc_html_e('Choose Template', 'page-management-plugin'); ?>
+                    <?php esc_html_e('Choose Template', 'dynamic-page-manager'); ?>
                 </button>
             <?php
             } else {
@@ -239,7 +243,7 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                     data-child-page="yes"
                     data-parent-id="<?php echo esc_attr($page->ID); ?>"
                     data-parent-slug="<?php echo esc_attr($page_slug); ?>">
-                    <?php esc_html_e('Choose Child Template', 'page-management-plugin'); ?>
+                    <?php esc_html_e('Choose Child Template', 'dynamic-page-manager'); ?>
                 </button>
             <?php
             }
@@ -317,7 +321,7 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
             <span class="pmp-node-actions">
                 <?php
                 pmp_render_form_button(
-                    ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category'])?'no':'yes'],
+                    ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category']) ? 'no' : 'yes'],
                     'Edit',
                     'inline'
                 );
@@ -326,11 +330,13 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                     ['page_id' => $page->ID, 'action' => 'delete_page'],
                     'Delete',
                     'inline',
-                    true
+                    true,
+                    'pmp_delete_action',
+                    'pmp_delete_nonce'
                 );
                 ?>
                 <a href="<?php echo esc_url(get_permalink($template_id)); ?>" target="_blank">template</a>
-                <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'page-management-plugin'); ?></a>
+                <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'dynamic-page-manager'); ?></a>
             </span>
         </div>
 
@@ -377,7 +383,7 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                         data-child-page="yes"
                         data-parent-id="<?php echo esc_attr($page->ID); ?>"
                         data-parent-slug="<?php echo esc_attr($page_slug); ?>">
-                        <?php esc_html_e('Choose Template', 'page-management-plugin'); ?>
+                        <?php esc_html_e('Choose Template', 'dynamic-page-manager'); ?>
                     </button>
                 </div>
             </div>
@@ -387,7 +393,7 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                     data-child-page="yes"
                     data-parent-id="<?php echo esc_attr($page->ID); ?>"
                     data-parent-slug="<?php echo esc_attr($page_slug); ?>">
-                    <?php esc_html_e('Choose Child Template', 'page-management-plugin'); ?>
+                    <?php esc_html_e('Choose Child Template', 'dynamic-page-manager'); ?>
                 </button>
             </div>
         <?php endif; ?>
@@ -429,7 +435,7 @@ function pmp_render_filtered_pages_table($pages, $all_child_pages, $category)
 
         echo '</td></tr>';
     } else {
-        echo '<tr><td colspan="2">' . esc_html__('No pages found.', 'page-management-plugin') . '</td></tr>';
+        echo '<tr><td colspan="2">' . esc_html__('No pages found.', 'dynamic-page-manager') . '</td></tr>';
     }
 }
 
@@ -467,7 +473,7 @@ function pmp_render_filtered_pages_tree($pages, $all_child_pages, $category)
         pmp_render_import_button(['template_title' => $category, 'child_page' => 'no', 'parent_slug' => '', 'existing_page' => $template_id], 'Import Existing Page', 'button-secondary');
         echo '</div></div>';
     } else {
-        echo '<div class="pmp-no-pages">' . esc_html__('No pages found.', 'page-management-plugin') . '</div>';
+        echo '<div class="pmp-no-pages">' . esc_html__('No pages found.', 'dynamic-page-manager') . '</div>';
     }
 }
 
@@ -482,16 +488,16 @@ function pmp_render_layout_switcher($current_layout)
     <div class="pmp-layout-switcher">
         <form method="post" action="">
             <?php wp_nonce_field('pmp_layout_change', 'pmp_layout_nonce'); ?>
-            <span><?php esc_html_e('Layout:', 'page-management-plugin'); ?></span>
+            <span><?php esc_html_e('Layout:', 'dynamic-page-manager'); ?></span>
             <label>
                 <input type="radio" name="pmp_layout" value="table" <?php checked($current_layout, 'table'); ?>>
-                <?php esc_html_e('Table', 'page-management-plugin'); ?>
+                <?php esc_html_e('Table', 'dynamic-page-manager'); ?>
             </label>
             <label>
                 <input type="radio" name="pmp_layout" value="tree" <?php checked($current_layout, 'tree'); ?>>
-                <?php esc_html_e('Tree', 'page-management-plugin'); ?>
+                <?php esc_html_e('Tree', 'dynamic-page-manager'); ?>
             </label>
-            <input type="submit" class="button button-small" value="<?php esc_attr_e('Apply', 'page-management-plugin'); ?>">
+            <input type="submit" class="button button-small" value="<?php esc_attr_e('Apply', 'dynamic-page-manager'); ?>">
         </form>
     </div>
     <?php
@@ -534,10 +540,10 @@ function pmp_admin_page()
 
     require_once plugin_dir_path(__FILE__) . 'templates/form-template.php';
 
-    if (!isset($_POST['import_template'])):
+    if (!isset($_POST['pmp_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_nonce'])), 'pmp_import_action') || !isset($_POST['import_template'])):
     ?>
         <div class="wrap" id="page-management">
-            <h1><?php esc_html_e('Page Management System', 'page-management-plugin'); ?></h1>
+            <h1><?php esc_html_e('Page Management System', 'dynamic-page-manager'); ?></h1>
             <div class="pmp-header-actions">
                 <?php pmp_render_layout_switcher($current_layout); ?>
             </div>
@@ -545,7 +551,7 @@ function pmp_admin_page()
             <h2 class="nav-tab-wrapper">
                 <?php pmp_render_category_tabs($categories); ?>
                 <button class="button button-primary choose_templates">
-                    <?php echo empty($categories) ? esc_html__('Choose Template', 'page-management-plugin') : esc_html__('+', 'page-management-plugin'); ?>
+                    <?php echo empty($categories) ? esc_html__('Choose Template', 'dynamic-page-manager') : esc_html__('+', 'dynamic-page-manager'); ?>
                 </button>
             </h2>
 
@@ -555,8 +561,8 @@ function pmp_admin_page()
                         <table class="wp-list-table widefat fixed striped pmp-table-layout">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e('Pages', 'page-management-plugin'); ?></th>
-                                    <th colspan="2"><?php esc_html_e('Child Pages', 'page-management-plugin'); ?></th>
+                                    <th><?php esc_html_e('Pages', 'dynamic-page-manager'); ?></th>
+                                    <th colspan="2"><?php esc_html_e('Child Pages', 'dynamic-page-manager'); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -572,42 +578,43 @@ function pmp_admin_page()
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
-    <p><?php esc_html_e('Instead of content, use {{{rdynamic_content type="text" name="first_title" title="first Title"}}} in your template page', 'page-management-plugin'); ?></p>
+    <p><?php esc_html_e('Instead of content, use {{{rdynamic_content type="text" name="first_title" title="first Title"}}} in your template page', 'dynamic-page-manager'); ?></p>
 
     <!-- Import Existing Page Modal -->
     <div id="import_existing_page_modal" class="pmp-modal" style="display: none;">
         <div class="pmp-modal-content">
             <span class="close-modal">&times;</span>
             <h2>Import Existing Page</h2>
-            
+
             <p>Select an existing page to import:</p>
             <form method="post" action="">
-            <select id="select_page_to_import" name="page_id">
-                <option value="">Select a page</option>
-                <?php
-                // Fetch existing pages and populate the dropdown
-                $pages = get_posts(array(
-                    'post_type' => 'page',
-                    'numberposts' => -1,
-                    'post_status' => array('publish', 'draft')
-                ));
-                
-                foreach ($pages as $page) {
-                    echo '<option value="' . esc_attr($page->ID) . '">' . esc_html($page->post_title) . ' (' . esc_html($page->post_status) . ')</option>';
-                }
-                ?>
-            </select>
-            
-            <div id="import_loading" style="display: none;">
-                <p>Loading page data...</p>
-            </div>
-            
-            <input type="hidden" name="template_title" id="template_title_hidden" value="">
-            <input type="hidden" id="child_page_hidden" value="">
-            <input type="hidden" id="parent_slug_hidden" value="">
-            <input type="hidden" name="existing_page" id="existing_page_hidden" value="">
-            <input type="hidden" name="action" value="import_template">
-            <button type="submit" id="import_selected_page_btn" class="button button-primary" disabled>Import Selected Page</button>
+                <?php wp_nonce_field('pmp_import_action', 'pmp_nonce'); ?>
+                <select id="select_page_to_import" name="page_id">
+                    <option value="">Select a page</option>
+                    <?php
+                    // Fetch existing pages and populate the dropdown
+                    $pages = get_posts(array(
+                        'post_type' => 'page',
+                        'numberposts' => -1,
+                        'post_status' => array('publish', 'draft')
+                    ));
+
+                    foreach ($pages as $page) {
+                        echo '<option value="' . esc_attr($page->ID) . '">' . esc_html($page->post_title) . ' (' . esc_html($page->post_status) . ')</option>';
+                    }
+                    ?>
+                </select>
+
+                <div id="import_loading" style="display: none;">
+                    <p>Loading page data...</p>
+                </div>
+
+                <input type="hidden" name="template_title" id="template_title_hidden" value="">
+                <input type="hidden" id="child_page_hidden" value="">
+                <input type="hidden" id="parent_slug_hidden" value="">
+                <input type="hidden" name="existing_page" id="existing_page_hidden" value="">
+                <input type="hidden" name="action" value="import_template">
+                <button type="submit" id="import_selected_page_btn" class="button button-primary" disabled>Import Selected Page</button>
             </form>
         </div>
     </div>
@@ -622,16 +629,17 @@ function pmp_admin_page()
  * @param string $button_text Text for the button
  * @param string $class Additional CSS class
  */
-function pmp_render_import_button($data, $button_text, $class = 'button-primary') {
-    ?>
-    <button type="button" class="button <?php echo esc_attr($class); ?> import_existing_page" 
-            data-template-title="<?php echo esc_attr($data['template_title']); ?>"
-            data-child-page="<?php echo esc_attr($data['child_page']); ?>"
-            data-parent-slug="<?php echo esc_attr($data['parent_slug'] ?? ''); ?>"
-            data-existing-page="<?php echo esc_attr($data['existing_page']); ?>">
+function pmp_render_import_button($data, $button_text, $class = 'button-primary')
+{
+?>
+    <button type="button" class="button <?php echo esc_attr($class); ?> import_existing_page"
+        data-template-title="<?php echo esc_attr($data['template_title']); ?>"
+        data-child-page="<?php echo esc_attr($data['child_page']); ?>"
+        data-parent-slug="<?php echo esc_attr($data['parent_slug'] ?? ''); ?>"
+        data-existing-page="<?php echo esc_attr($data['existing_page']); ?>">
         <?php echo esc_html($button_text); ?>
     </button>
-    <?php
+<?php
 }
 
 
@@ -643,37 +651,38 @@ add_action('wp_ajax_pmp_import_existing_page', 'pmp_handle_import_existing_page'
 /**
  * AJAX handler for importing existing page data
  */
-function pmp_handle_import_existing_page() {
+function pmp_handle_import_existing_page()
+{
     // Verify nonce
     if (!isset($_POST['nonce'])) {
         wp_send_json_error('Security check failed');
     }
-    
+
     // Unsplash the nonce for safe verification
     $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
-    
+
     if (!wp_verify_nonce($nonce, 'pmp_layout_nonce')) {
         wp_send_json_error('Security check failed');
     }
-    
+
     // Check for page ID
     if (!isset($_POST['page_id']) || empty($_POST['page_id'])) {
         wp_send_json_error('No page ID provided');
     }
-    
+
     $page_id = intval($_POST['page_id']);
     $page = get_post($page_id);
-    
+
     if (!$page) {
         wp_send_json_error('Page not found');
     }
-    
+
     // Get page data
     $page_data = array(
         'title' => $page->post_title,
         'slug' => $page->post_name,
         'meta' => get_post_meta($page_id)
     );
-    
+
     wp_send_json_success($page_data);
 }

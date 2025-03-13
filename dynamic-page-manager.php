@@ -1,10 +1,12 @@
 <?php
 /**
- * Plugin Name: Page Management Plugin
- * Description: A plugin to manage and create multiple pages based on templates with dynamic content.
+ * Plugin Name: Dynamic Page Manager
+ * Description: A powerful plugin for managing and creating multiple pages based on customizable templates with dynamic content integration.
  * Version: 1.0
- * Author: Your Name
- * License: GPLv2 or later
+ * Author: Raihan Hossain
+ * License: GPL-2.0-or-later
+ * License URI: https://opensource.org/licenses/GPL-2.0
+ * Text Domain: dynamic-page-manager
  */
 
 // Exit if accessed directly
@@ -17,8 +19,6 @@ define( 'PMP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PMP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 // Include necessary files
-require_once PMP_PLUGIN_DIR . 'src/includes/class-page-manager.php';
-require_once PMP_PLUGIN_DIR . 'src/includes/class-template-handler.php';
 require_once PMP_PLUGIN_DIR . 'src/admin/admin-page.php';
 require_once PMP_PLUGIN_DIR . 'src/blocks/class-pmp-blocks.php';
 
@@ -32,7 +32,7 @@ register_deactivation_hook( __FILE__, 'pmp_deactivate' );
 // Initialize the plugin
 function pmp_init() {
     // Load text domain for translations
-    load_plugin_textdomain('page-management-plugin', false, basename(dirname(__FILE__)) . '/languages');
+    load_plugin_textdomain('dynamic-page-manager', false, basename(dirname(__FILE__)) . '/languages');
 }
 add_action( 'init', 'pmp_init' );
 
@@ -58,6 +58,25 @@ function pmp_enqueue_block_editor_assets() {
 add_action('enqueue_block_editor_assets', 'pmp_enqueue_block_editor_assets');
 
 
+function get_dependent_pages($template_id) {
+    
+    $dependent_pages = get_posts(array(
+        'post_type' => 'page',
+        'meta_query' => array(
+            array(
+                'key' => 'rdynamic_template_id',
+                'value' => $template_id,
+                'compare' => '='
+            )
+        ),
+        'posts_per_page' => -1,
+        'fields' => 'ids' // Only get IDs for better performance
+    ));
+    
+    return $dependent_pages;
+}
+
+
 // on template page update, update all included pages
 /**
  * Hook into post update to handle template changes
@@ -73,17 +92,7 @@ function pmp_template_update_handler($post_id, $post_after, $post_before) {
     $title_changed = $post_after->post_title !== $post_before->post_title;
     
     // Find all pages that use this template
-    $dependent_pages = get_posts(array(
-        'post_type' => 'page',
-        'meta_query' => array(
-            array(
-                'key' => 'rdynamic_template_id',
-                'value' => $post_id,
-                'compare' => '='
-            )
-        ),
-        'posts_per_page' => -1
-    ));
+    $dependent_pages = get_dependent_pages($post_id);
     
     if (empty($dependent_pages)) {
         return;
@@ -245,23 +254,13 @@ add_action('add_meta_boxes', 'add_template_info_meta_box');
  */
 function render_template_info_meta_box($post) {
     // Check if this is a template page
-    $dependent_pages = get_posts(array(
-        'post_type' => 'page',
-        'meta_query' => array(
-            array(
-                'key' => 'rdynamic_template_id',
-                'value' => $post->ID,
-                'compare' => '='
-            )
-        ),
-        'posts_per_page' => -1
-    ));
+    $dependent_pages = get_dependent_pages($post->ID);
     
     if (!empty($dependent_pages)) {
         echo '<p><strong>This is a template page used by:</strong></p>';
         echo '<ul>';
-        foreach ($dependent_pages as $page) {
-            echo '<li><a href="' . esc_url(get_edit_post_link($page->ID)) . '">' . esc_html($page->post_title) . '</a></li>';
+        foreach ($dependent_pages as $page_id) {
+            echo '<li><a href="' . esc_url(get_edit_post_link($page_id)) . '">' . esc_html(get_the_title($page_id)) . '</a></li>';
         }
         echo '</ul>';
         echo '<p><em>Content and style changes made to this page will update all dependent pages.</em></p>';

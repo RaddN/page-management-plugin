@@ -14,7 +14,8 @@ function dapfforwc_register_dynamic_ajax_filter_block()
         'pmp-blocks',
         plugins_url('dynamic-content-block/block.js', __FILE__),
         array('wp-blocks', 'wp-element', 'wp-editor', 'wp-components'),
-        filemtime(plugin_dir_path(__FILE__) . 'dynamic-content-block/block.js')
+        filemtime(plugin_dir_path(__FILE__) . 'dynamic-content-block/block.js'),
+        true
     );
 
     register_block_type('pmp/dynamic-content', array(

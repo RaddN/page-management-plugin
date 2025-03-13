@@ -51,6 +51,8 @@ jQuery(document).ready(function($) {
                 $('#import_existing_page_modal').hide();
                 // Submit form with the imported data
                 let formHtml = '<form id="import_data_form" method="post" action="">';
+                formHtml += '<input type="hidden" id="pmp_nonce" name="pmp_nonce" value="88cdd84e3a">';
+                formHtml += '<input type="hidden" name="_wp_http_referer" value="/wp-admin/admin.php?page=page-management">';
                 formHtml += '<input type="hidden" name="import_template" value="1">';
                 formHtml += '<input type="hidden" name="template_title" value="' + data.template_title + '">';
                 formHtml += '<input type="hidden" name="child_page" value="' + data.child_page + '">';
