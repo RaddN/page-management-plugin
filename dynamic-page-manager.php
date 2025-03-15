@@ -22,6 +22,7 @@ define( 'PMP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once PMP_PLUGIN_DIR . 'src/admin/admin-page.php';
 require_once PMP_PLUGIN_DIR . 'src/blocks/class-pmp-blocks.php';
 
+
 // Deactivation hook
 function pmp_deactivate() {
     // Flush rewrite rules
@@ -284,3 +285,43 @@ function render_template_info_meta_box($post) {
         }
     }
 }
+
+
+// Check if Elementor is active
+function dcm_elementor_check() {
+    if (!did_action('elementor/loaded')) {
+        return false;
+    }
+    return true;
+}
+
+// Initialize the plugin
+function dcm_init() {
+    // Check if Elementor is installed and activated
+    if (!dcm_elementor_check()) {
+        return;
+    }
+    
+    // Register the widget
+    add_action('elementor/widgets/widgets_registered', 'dcm_register_widgets');
+}
+add_action('plugins_loaded', 'dcm_init');
+
+// Register widget
+function dcm_register_widgets() {
+    // require_once(__DIR__ . '/widgets/dynamic-content-widget.php');
+    require_once PMP_PLUGIN_DIR . 'src/elementor/widget.php';
+}
+
+
+// Register widget styles
+function dcm_register_styles() {
+    wp_register_style(
+        'dynamic-content-management-styles',
+        plugins_url('src/elementor/dynamic-content.css', __FILE__),
+        [],
+        '1.0.0'
+    );
+}
+add_action('wp_enqueue_scripts', 'dcm_register_styles');
+add_action('elementor/editor/before_enqueue_scripts', 'dcm_register_styles');

@@ -1,0 +1,42 @@
+/* Common widget styles */
+.pmp-dynamic-content-widget,
+.pmp-dynamic-loop-widget,
+.pmp-dynamic-loop-content-widget {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0;
+    margin-bottom: 12px;
+    background-color: #fff;
+}
+
+/* Header styles */
+.pmp-block-header {
+    padding: 10px 15px;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+/* Content styles */
+.pmp-widget-content {
+    padding: 15px;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+/* Specific header styles */
+.pmp-dynamic-header {
+    background-color: #e8f6fd;
+    color: #0073aa;
+}
+
+.pmp-loop-header {
+    background-color: #f9f1e8;
+    color: #aa7700;
+}
+
+.pmp-content-header {
+    background-color: #e8f6fd;
+    color: #0073aa;
+}

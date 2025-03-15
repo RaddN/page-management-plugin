@@ -587,7 +587,7 @@ if (!isset($_POST['pmp_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unsla
                 let newItem = document.createElement('div');
                 newItem.classList.add('loop_item');
                 newItem.innerHTML = `<h4>Item ${loopCount}</h4>
-                            <?php foreach ($loop_content_matches as $loop_match): ?>
+                            <?php foreach ($loop_content_matches ?? [] as $loop_match): ?>
                                 <label for="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>"><?php echo esc_html($loop_match[3]); ?>:</label>
                                 <input type="<?php echo esc_attr($loop_match[1]); ?>" id="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" name="rdynamic_${loopName}_${loopCount}_<?php echo esc_attr($loop_match[2]); ?>" required>
                             <?php endforeach; ?>`;
