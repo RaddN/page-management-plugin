@@ -177,20 +177,21 @@ function pmp_get_child_pages_for_parent($parent_id, $all_child_pages)
  * @param array $all_child_pages Array of all child pages
  * @param int $nesting_level Current nesting level for indentation
  */
-function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting_level = 0) {
+function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting_level = 0)
+{
     $template_id = $meta_data['rdynamic_template_id'] ?? '';
     $category = $meta_data['rpage_category'] ?? $meta_data['rpage_child_category'] ?? '';
     $page_slug = get_post_field('post_name', $page->ID);
 
     // Add indentation based on nesting level
     $indent_style = $nesting_level > 0 ? 'margin-left: ' . ($nesting_level * 20) . 'px;' : '';
-    ?>
+?>
     <tr>
         <td style="<?php echo esc_attr($indent_style); ?>">
             <!-- Notice the changed checkbox name from 'selected_pages' to 'selected_pages[]' -->
             <div style="display: flex ; align-items: center; gap: 5px;">
-            <input name="selected_pages[]" type="checkbox" value="<?php echo esc_attr($page->ID); ?>">
-            <h3><?php echo esc_html(get_the_title($page->ID)); ?></h3>
+                <input name="selected_pages[]" type="checkbox" value="<?php echo esc_attr($page->ID); ?>">
+                <h3><?php echo esc_html(get_the_title($page->ID)); ?></h3>
             </div>
             <?php pmp_render_form_button(
                 ['template_title' => $category, 'existing_page' => $template_id, 'page_id' => $page->ID, 'action' => 'import_template', 'child_page' => isset($meta_data['rpage_category']) ? 'no' : 'yes'],
@@ -204,7 +205,18 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                 true,
                 'pmp_delete_action',
                 'pmp_delete_nonce'
-            ); ?>
+            );
+            pmp_render_form_button(
+                ['page_id' => $page->ID, 'action' => 'duplicate_page'],
+                'Duplicate',
+                'inline',
+                false,
+                'pmp_duplicate_action',
+                'pmp_duplicate_nonce'
+            );
+
+            ?>
+
             <a href="<?php echo esc_url(get_permalink($template_id)); ?>" target="_blank">template</a>
             <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'dynamic-page-manager'); ?></a>
         </td>
@@ -219,7 +231,7 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                 }
                 foreach ($child_categories as $child_category) :
                     echo '<h3>' . esc_html($child_category) . '</h3>';
-                    ?>
+            ?>
                     <table class="wp-list-table widefat fixed striped" style="border: none;">
                         <tbody>
                             <?php pmp_render_nested_child_pages_table($page, $direct_child_pages, $all_child_pages, $child_category, $page_slug, $nesting_level + 1); ?>
@@ -229,9 +241,9 @@ function pmp_render_page_row_table($page, $meta_data, $all_child_pages, $nesting
                 <button class="button button-primary choose_templates" data-child-page="yes" data-parent-id="<?php echo esc_attr($page->ID); ?>" data-parent-slug="<?php echo esc_attr($page_slug); ?>" style="margin-top: 50px;">
                     <?php esc_html_e('Choose Template', 'dynamic-page-manager'); ?>
                 </button>
-            <?php } else { 
+            <?php } else {
                 // Button to add first child page if none exist 
-                ?>
+            ?>
                 <button class="button button-primary choose_templates" data-child-page="yes" data-parent-id="<?php echo esc_attr($page->ID); ?>" data-parent-slug="<?php echo esc_attr($page_slug); ?>">
                     <?php esc_html_e('Choose Child Template', 'dynamic-page-manager'); ?>
                 </button>
@@ -290,7 +302,8 @@ function pmp_render_nested_child_pages_table($parent_page, $direct_child_pages, 
  * @param array $all_child_pages Array of all child pages
  * @param int $nesting_level Current nesting level for indentation
  */
-function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_level = 0) {
+function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_level = 0)
+{
     $template_id = $meta_data['rdynamic_template_id'] ?? '';
     $category = $meta_data['rpage_category'] ?? $meta_data['rpage_child_category'] ?? '';
     $page_slug = get_post_field('post_name', $page->ID);
@@ -306,8 +319,8 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
             <span class="pmp-node-toggle"><?php echo $has_children ? '<span class="dashicons dashicons-arrow-down"></span>' : ''; ?></span>
             <!-- Add checkbox for tree view bulk actions -->
             <div style="display: flex ; align-items: center; gap: 5px;">
-            <input name="selected_pages[]" type="checkbox" value="<?php echo esc_attr($page->ID); ?>">
-            <span class="pmp-node-title"><?php echo esc_html(get_the_title($page->ID)); ?></span>
+                <input name="selected_pages[]" type="checkbox" value="<?php echo esc_attr($page->ID); ?>">
+                <span class="pmp-node-title"><?php echo esc_html(get_the_title($page->ID)); ?></span>
             </div>
             <span class="pmp-node-actions">
                 <?php pmp_render_form_button(
@@ -322,12 +335,22 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                     true,
                     'pmp_delete_action',
                     'pmp_delete_nonce'
-                ); ?>
+                );
+                pmp_render_form_button(
+                    ['page_id' => $page->ID, 'action' => 'duplicate_page'],
+                    'Duplicate',
+                    'inline',
+                    false,
+                    'pmp_duplicate_action',
+                    'pmp_duplicate_nonce'
+                );
+
+                ?>
                 <a href="<?php echo esc_url(get_permalink($template_id)); ?>" target="_blank">template</a>
                 <a href="<?php echo esc_url(get_permalink($page->ID)); ?>" target="_blank"><?php esc_html_e('View', 'dynamic-page-manager'); ?></a>
             </span>
         </div>
-        
+
         <?php if ($has_children): ?>
             <div class="pmp-tree-children">
                 <?php
@@ -342,7 +365,7 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
                         $page_category = $meta_data['rpage_child_category'] ?? 'Default';
                         return $page_category === $child_category;
                     });
-                    ?>
+                ?>
                     <div class="pmp-tree-category">
                         <h4><?php echo esc_html($child_category); ?></h4>
                         <?php foreach ($filtered_pages as $child_page) {
@@ -376,7 +399,7 @@ function pmp_render_page_tree($page, $meta_data, $all_child_pages, $nesting_leve
             </div>
         <?php endif; ?>
     </div>
-    <?php
+<?php
 }
 
 /**
@@ -484,7 +507,8 @@ function pmp_render_layout_switcher($current_layout)
 /**
  * Main admin page callback function
  */
-function pmp_admin_page() {
+function pmp_admin_page()
+{
     // Get user layout preference (default to table)
     $current_layout = get_user_meta(get_current_user_id(), 'pmp_layout_preference', true);
     if (empty($current_layout)) {
@@ -519,54 +543,54 @@ function pmp_admin_page() {
 
     if (!isset($_POST['pmp_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_nonce'])), 'pmp_import_action') || !isset($_POST['import_template'])):
     ?>
-    <div class="wrap" id="page-management">
-        <h1><?php esc_html_e('Page Management System', 'dynamic-page-manager'); ?></h1>
-        <div class="pmp-header-actions">
-            <?php pmp_render_layout_switcher($current_layout); ?>
-        </div>
-        
-        <!-- Start bulk action form here to include all checkboxes -->
-        <form method="post" action="" id="pmp-bulk-action-form">
-            <?php wp_nonce_field('pmp_bulk_action', 'pmp_bulk_nonce'); ?>
-            
-            <div style="display: flex; justify-content: space-between;">
-                <h2 class="nav-tab-wrapper">
-                    <?php pmp_render_category_tabs($categories); ?>
-                    <button class="button button-primary choose_templates">
-                        <?php echo empty($categories) ? esc_html__('Choose Template', 'dynamic-page-manager') : esc_html__('+', 'dynamic-page-manager'); ?>
-                    </button>
-                </h2>
-                <?php
-                pmp_render_bulk_actions(); ?>
+        <div class="wrap" id="page-management">
+            <h1><?php esc_html_e('Page Management System', 'dynamic-page-manager'); ?></h1>
+            <div class="pmp-header-actions">
+                <?php pmp_render_layout_switcher($current_layout); ?>
             </div>
 
-            <?php foreach ($categories as $index => $category) : ?>
-            <div id="tab-<?php echo esc_attr($index + 1); ?>" class="tab-content" style="<?php echo $index === 0 ? 'display:block;' : 'display:none;'; ?>">
-                <?php if ($current_layout === 'table') : ?>
-                <table class="wp-list-table widefat fixed striped pmp-table-layout">
-                    <thead>
-                        <tr>
-                            <th>
-                                <input type="checkbox" class="select-all-pages" />
-                                <?php esc_html_e('Pages', 'dynamic-page-manager'); ?>
-                            </th>
-                            <th colspan="2"><?php esc_html_e('Child Pages', 'dynamic-page-manager'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php pmp_render_filtered_pages_table($pages, $all_child_pages, $category); ?>
-                    </tbody>
-                </table>
-                <?php else : ?>
-                <div class="pmp-tree-layout">
-                    <?php pmp_render_filtered_pages_tree($pages, $all_child_pages, $category); ?>
+            <!-- Start bulk action form here to include all checkboxes -->
+            <form method="post" action="" id="pmp-bulk-action-form">
+                <?php wp_nonce_field('pmp_bulk_action', 'pmp_bulk_nonce'); ?>
+
+                <div style="display: flex; justify-content: space-between;">
+                    <h2 class="nav-tab-wrapper">
+                        <?php pmp_render_category_tabs($categories); ?>
+                        <button class="button button-primary choose_templates">
+                            <?php echo empty($categories) ? esc_html__('Choose Template', 'dynamic-page-manager') : esc_html__('+', 'dynamic-page-manager'); ?>
+                        </button>
+                    </h2>
+                    <?php
+                    pmp_render_bulk_actions(); ?>
                 </div>
-                <?php endif; ?>
-            </div>
-            <?php endforeach; ?>
-        </form>
-        <!-- End bulk action form -->
-    </div>
+
+                <?php foreach ($categories as $index => $category) : ?>
+                    <div id="tab-<?php echo esc_attr($index + 1); ?>" class="tab-content" style="<?php echo $index === 0 ? 'display:block;' : 'display:none;'; ?>">
+                        <?php if ($current_layout === 'table') : ?>
+                            <table class="wp-list-table widefat fixed striped pmp-table-layout">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" class="select-all-pages" />
+                                            <?php esc_html_e('Pages', 'dynamic-page-manager'); ?>
+                                        </th>
+                                        <th colspan="2"><?php esc_html_e('Child Pages', 'dynamic-page-manager'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php pmp_render_filtered_pages_table($pages, $all_child_pages, $category); ?>
+                                </tbody>
+                            </table>
+                        <?php else : ?>
+                            <div class="pmp-tree-layout">
+                                <?php pmp_render_filtered_pages_tree($pages, $all_child_pages, $category); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </form>
+            <!-- End bulk action form -->
+        </div>
     <?php endif; ?>
     <p><?php esc_html_e('Instead of content, use {{{rdynamic_content type="text" name="first_title" title="first Title"}}} in your template page', 'dynamic-page-manager'); ?></p>
 
@@ -604,8 +628,8 @@ function pmp_admin_page() {
             </form>
         </div>
     </div>
-    
-    <?php
+
+<?php
     // Add JavaScript for bulk actions
     $inline_script = "
     jQuery(document).ready(function($) {
@@ -732,8 +756,9 @@ function pmp_handle_import_existing_page()
 /**
  * Add bulk actions to the admin page
  */
-function pmp_render_bulk_actions() {
-    ?>
+function pmp_render_bulk_actions()
+{
+?>
     <div class="pmp-bulk-actions">
         <select name="bulk_action">
             <option value=""><?php esc_html_e('Bulk Actions', 'dynamic-page-manager'); ?></option>
@@ -750,22 +775,23 @@ function pmp_render_bulk_actions() {
 /**
  * Process bulk actions
  */
-function pmp_process_bulk_actions() {
+function pmp_process_bulk_actions()
+{
     if (!isset($_POST['pmp_bulk_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_bulk_nonce'])), 'pmp_bulk_action')) {
         return;
     }
-    
+
     if (!isset($_POST['bulk_action']) || empty($_POST['bulk_action']) || !isset($_POST['selected_pages']) || empty($_POST['selected_pages'])) {
         return;
     }
-    
+
     $action = sanitize_text_field(wp_unslash($_POST['bulk_action']));
     $page_ids = array_map('intval', $_POST['selected_pages']);
-    
+
     // Debug info
     error_log('Bulk action: ' . $action);
     error_log('Page IDs: ' . print_r($page_ids, true));
-    
+
     switch ($action) {
         case 'delete':
             foreach ($page_ids as $page_id) {
@@ -806,10 +832,10 @@ function pmp_process_bulk_actions() {
             }
             break;
     }
-    
+
     // Add a success message to the admin notice
     add_action('admin_notices', 'pmp_bulk_action_notice');
-    
+
     // Redirect to avoid form resubmission
     wp_redirect(admin_url('admin.php?page=page-management&bulk_action=completed'));
     exit;
@@ -818,13 +844,14 @@ function pmp_process_bulk_actions() {
 /**
  * Add admin notice for bulk action completion
  */
-function pmp_bulk_action_notice() {
+function pmp_bulk_action_notice()
+{
     if (isset($_GET['bulk_action']) && $_GET['bulk_action'] === 'completed') {
-        ?>
+    ?>
         <div class="notice notice-success is-dismissible">
             <p><?php _e('Bulk action completed successfully.', 'dynamic-page-manager'); ?></p>
         </div>
-        <?php
+<?php
     }
 }
 

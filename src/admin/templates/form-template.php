@@ -9,6 +9,8 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
+add_action('init', 'my_redirect_function');
+
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle form submissions
     PMP_handle_form_submission();
@@ -33,6 +35,12 @@ function PMP_handle_form_submission()
     } elseif (isset($_POST['delete_page'])) {
         if (isset($_POST['pmp_delete_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_delete_nonce'])), 'pmp_delete_action')) {
             delete_page();
+            // This function handles its own redirect
+        }
+    }
+    elseif (isset($_POST['duplicate_page'])) {
+        if (isset($_POST['pmp_duplicate_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_duplicate_nonce'])), 'pmp_duplicate_action')) {
+            duplicate_page();
             // This function handles its own redirect
         }
     }
@@ -170,6 +178,42 @@ function delete_page()
         </script>
     <?php
         exit;
+    }
+}
+
+function duplicate_page()
+{
+    if (isset($_POST['pmp_duplicate_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['pmp_duplicate_nonce'])), 'pmp_duplicate_action')) {
+
+        $page_id = intval($_POST['page_id'] ?? '');
+
+        // Get the original page
+        $original_page = get_post($page_id);
+
+        if ($original_page) {
+            // Create a new page with the same content
+            $new_page_id = wp_insert_post(array(
+                'post_title' => $original_page->post_title . ' (Copy)',
+                'post_name' => $original_page->post_name . '-copy',
+                'post_content' => $original_page->post_content,
+                'post_status' => 'draft',
+                'post_type' => 'page',
+                'post_parent' => $original_page->post_parent,
+            ));
+
+            // Duplicate post meta
+            $meta_data = get_post_meta($page_id);
+            foreach ($meta_data as $key => $values) {
+                foreach ($values as $value) {
+                    add_post_meta($new_page_id, $key, maybe_unserialize($value));
+                }
+            }
+            function my_redirect_function() {
+                // Check your conditions
+                    wp_safe_redirect(esc_url(admin_url('admin.php?page=page-management')));
+                    exit;
+            }
+        }
     }
 }
 
@@ -350,115 +394,6 @@ if (!isset($_POST['pmp_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unsla
         $htmlOnly = '<div class="old_content"><code style="white-space: pre-wrap;">' . extractOnlyHtmlTags($imported_page_content) . '</code></div>';
     }
     ?>
-
-    <style>
-        /* Base styles for the form */
-        .old_content {
-            height: 500px;
-            margin: 20px;
-            overflow: scroll;
-        }
-
-        #rcreate_page {
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            display: grid;
-            grid-template-columns: repeat(2, 1fr) !important;
-            justify-content: space-between;
-            column-gap: 100px;
-        }
-
-        /* Form headings */
-        #rcreate_page h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #333;
-            grid-column: span 2;
-        }
-
-        #rcreate_page h3 {
-            font-size: 20px;
-            margin-top: 30px;
-            margin-bottom: 10px;
-            color: #555;
-        }
-
-        /* Input fields */
-        #rcreate_page input[type="text"],
-        #rcreate_page input[type="url"],
-        #rcreate_page input[type="hidden"],
-        #rcreate_page input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        /* Labels */
-        #rcreate_page label {
-            font-size: 14px;
-            margin-bottom: 5px;
-            display: block;
-            color: #666;
-        }
-
-        /* Buttons */
-        #rcreate_page button {
-            background-color: #007cba;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-            margin-right: 20px;
-        }
-
-        #rcreate_page button:hover {
-            background-color: #005a8c;
-        }
-
-        #rcreate_page textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            /* Ensures padding is included in width */
-        }
-
-        /* Responsive design */
-        @media (max-width: 600px) {
-            #rcreate_page {
-                padding: 15px;
-            }
-
-            #rcreate_page h2 {
-                font-size: 22px;
-            }
-
-            #rcreate_page h3 {
-                font-size: 18px;
-            }
-
-            #rcreate_page input[type="text"],
-            #rcreate_page input[type="url"] {
-                font-size: 14px;
-            }
-
-            #rcreate_page button {
-                width: 100%;
-                padding: 12px;
-            }
-        }
-    </style>
     <form method="post" action="" id="rcreate_page">
         <?php wp_nonce_field('pmp_create_page_action', 'pmp_create_page_nonce'); ?>
         <h2><?php echo !isset($_POST['page_id']) ? 'Create Page' : 'Update Page'; ?></h2>
@@ -574,7 +509,9 @@ if (!isset($_POST['pmp_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unsla
 
             <?php endif; ?>
     </form>
-    <script>
+    <?php 
+    ob_start();
+    ?>
         document.querySelectorAll('.add_loop_item').forEach(button => {
             button.addEventListener('click', function() {
                 let loopName = this.getAttribute('data-loop-name');
@@ -610,7 +547,10 @@ if (!isset($_POST['pmp_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unsla
                 }
             });
         });
-    </script>
+    <?php
+    $inline_script = ob_get_clean();
+    wp_add_inline_script('pmp-plugin-scripts', $inline_script);
+    ?>
 
 <?php endif;
 
